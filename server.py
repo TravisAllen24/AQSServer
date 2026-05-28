@@ -3,12 +3,20 @@ import csv
 import datetime
 
 
-def format_value(value: int|float|None, precision: int=0) -> str:
+def format_value(value: str|int|float|None, precision: int=0) -> str:
     """Format the value or return '----' if None."""
     if value is None:
-        return "----"
+        return "-"
+
+    if isinstance(value, str):
+        try:
+            return f"{round(float(value), precision):.{precision}f}"
+        except ValueError:
+            return value
+
     if isinstance(value, float):
         return f"{round(value, precision):.{precision}f}"
+
     return str(value)
 
 
@@ -104,7 +112,7 @@ def plotter(time_duration = 'Hour', data_type = "T"):
             ax.set_ylabel(get_y_label(data_type))
 
 
-def get_latest_data(data_type):
+def get_latest_data(data_type, precision=0):
     last_row = "-,-,-,-,-,-,-,-,-,-"
     with open('data_log.csv', newline='') as data_log:
         reader = csv.reader(data_log, delimiter=',')
@@ -127,7 +135,7 @@ def get_latest_data(data_type):
                 "pm100": pm100
             }
 
-    return datas.get(data_type, datas["time"])
+    return format_value(datas.get(data_type, datas["time"]), precision=precision)
 
 
 @ui.page('/')
@@ -142,7 +150,7 @@ def index_page():
             with ui.card_actions():
                 with ui.card():
                     with ui.grid(columns=2):
-                        ui.label('dt:').style('font-size: 125%; font-weight: 500')
+                        ui.label('Datetime:').style('font-size: 125%; font-weight: 500')
                         time_label = ui.label().style('font-size: 125%')
 
                         ui.label('Temperature: ').style('font-size: 125%; font-weight: 500')
@@ -180,7 +188,7 @@ def index_page():
 
                     ui.timer(1, lambda: (time_label.set_text(get_latest_data('time')),
                                         temp_label.set_text(f'{get_latest_data('temp')} C'),
-                                        rh_label.set_text(f'{format_value(float(get_latest_data('humidity')), 2)}%'),
+                                        rh_label.set_text(f'{get_latest_data('humidity', 2)}%'),
                                         dp_label.set_text(f'{get_latest_data('dew_point')} C'),
                                         co2_label.set_text(f'{get_latest_data('co2')} ppm'),
                                         voc_raw_label.set_text(f'{get_latest_data('voc_raw')}'),
