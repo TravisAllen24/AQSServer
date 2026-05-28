@@ -1,18 +1,6 @@
 from nicegui import ui, app
-import serial
-import asyncio
 import csv
 import datetime
-
-import matplotlib
-matplotlib.use('Agg')
-
-port = 'COM4'
-
-def create_serial():
-    global ser
-    ser = serial.Serial(baudrate = 115200, port=port)
-    ser.reset_input_buffer()
 
 
 def format_value(value: int|float|None, precision: int=0) -> str:
@@ -22,38 +10,6 @@ def format_value(value: int|float|None, precision: int=0) -> str:
     if isinstance(value, float):
         return f"{round(value, precision):.{precision}f}"
     return str(value)
-
-
-def parse_data(data):
-    data = data.replace('\n', '').replace('\r', '').split('>')[-1].split(',')
-
-    if len(data) != 10:
-        return ['0']*10
-
-    return data
-
-
-def log_data(data):
-    with open('data_log.csv', mode='a', newline='') as data_log:
-        writer = csv.writer(data_log)
-        writer.writerow(data)
-
-
-async def read_serial():
-    global latest_data
-    latest_data = ['0']*10
-    while True:
-        try:
-            raw_data = ser.readline().decode('ascii')
-            latest_data = parse_data(raw_data)
-            log_data(latest_data)
-            ser.reset_input_buffer()
-
-        except Exception as e:
-            print(f'Error: {e}')
-            latest_data = ['0']*10
-
-        await asyncio.sleep(5)
 
 
 def convert_time(time):
@@ -74,7 +30,7 @@ def delta_time(time_duration):
 def create_timeseries(time_duration, data_type):
     t=[]
     y=[]
-    now = datetime.datetime.now() - datetime.timedelta(hours=2)
+    now = datetime.datetime.now()
 
     start_time = now-delta_time(time_duration)
 
@@ -117,24 +73,6 @@ def get_y_label(data_type):
     return y_labels.get(data_type, y_labels["T"])
 
 
-def aggregate_data(ts, xs, time_duration):
-    aggregation_mapping = {"Hour": 1,
-             "Day": 210,
-             "Week": 840,
-             "Month": 3360,
-             "Max": 40320
-             }
-    t = []
-    x = []
-    step = aggregation_mapping[time_duration]
-    for i in range(len(ts)):
-        if i % step == 0:
-            t.append(ts[i])
-            x.append(xs[i])
-
-    return t, x
-
-
 @ui.refreshable
 def plotter(time_duration = 'Hour', data_type = "T"):
 
@@ -166,8 +104,31 @@ def plotter(time_duration = 'Hour', data_type = "T"):
             ax.set_ylabel(get_y_label(data_type))
 
 
-app.on_startup(create_serial)
-app.on_startup(read_serial)
+def get_latest_data(data_type):
+    last_row = "-,-,-,-,-,-,-,-,-,-"
+    with open('data_log.csv', newline='') as data_log:
+        reader = csv.reader(data_log, delimiter=',')
+        next(reader)
+
+        for row in reader:
+            last_row = row
+
+    dt,temp,humidity,dp,co2,voc_raw,voc_index,pm10,pm25,pm100=last_row
+
+    datas = {   "time": dt,
+                "temp": temp,
+                "humidity": humidity,
+                "dew_point": dp,
+                "co2": co2,
+                "voc_raw": voc_raw,
+                "voc_index": voc_index,
+                "pm10": pm10,
+                "pm25": pm25,
+                "pm100": pm100
+            }
+
+    return datas.get(data_type, datas["time"])
+
 
 @ui.page('/')
 def index_page():
@@ -217,16 +178,16 @@ def index_page():
                         ui.label('PM 1.0: ').style('font-size: 125%; font-weight: 500')
                         pm10_label = ui.label().style('font-size: 125%')
 
-                    ui.timer(1, lambda: (time_label.set_text(latest_data[0]),
-                                        temp_label.set_text(f'{latest_data[1]} C'),
-                                        rh_label.set_text(f'{format_value(float(latest_data[2]), 2)}%'),
-                                        dp_label.set_text(f'{latest_data[3]} C'),
-                                        co2_label.set_text(f'{latest_data[4]} ppm'),
-                                        voc_raw_label.set_text(f'{latest_data[5]}'),
-                                        voc_index_label.set_text(f'{latest_data[6]}'),
-                                        pm100_label.set_text(f'{latest_data[7]} μg/c^3'),
-                                        pm25_label.set_text(f'{latest_data[8]} μg/c^3'),
-                                        pm10_label.set_text(f'{latest_data[9]} μg/c^3'),))
+                    ui.timer(1, lambda: (time_label.set_text(get_latest_data('time')),
+                                        temp_label.set_text(f'{get_latest_data('temp')} C'),
+                                        rh_label.set_text(f'{format_value(float(get_latest_data('humidity')), 2)}%'),
+                                        dp_label.set_text(f'{get_latest_data('dew_point')} C'),
+                                        co2_label.set_text(f'{get_latest_data('co2')} ppm'),
+                                        voc_raw_label.set_text(f'{get_latest_data('voc_raw')}'),
+                                        voc_index_label.set_text(f'{get_latest_data('voc_index')}'),
+                                        pm100_label.set_text(f'{get_latest_data('pm100')} μg/c^3'),
+                                        pm25_label.set_text(f'{get_latest_data('pm25')} μg/c^3'),
+                                        pm10_label.set_text(f'{get_latest_data('pm10')} μg/c^3'),))
 
 
         with ui.column():
