@@ -62,6 +62,8 @@ def create_timeseries(time_duration, data_type):
                 continue
             if data == 'None':
                 continue
+            if data == '-':
+                continue
             formatted_time = convert_time(dt)
             if formatted_time >= start_time:
                 t.append(formatted_time)
@@ -165,17 +167,11 @@ def index_page():
                         ui.label('CO2: ').style('font-size: 125%; font-weight: 500')
                         co2_label = ui.label().style('font-size: 125%')
 
-                        ui.label('VOC Raw: ').style('font-size: 125%; font-weight: 500')
-                        voc_raw_label = ui.label().style('font-size: 125%')
-
                         ui.label('VOC Index: ').style('font-size: 125%; font-weight: 500')
                         voc_index_label = ui.label().style('font-size: 125%')
 
-                        ui.label('NOx Raw: ').style('font-size: 125%; font-weight: 500')
-                        nox_raw_label = ui.label('0').style('font-size: 125%')
-
                         ui.label('NOx Index: ').style('font-size: 125%; font-weight: 500')
-                        nox_index_label = ui.label('0').style('font-size: 125%')
+                        nox_index_label = ui.label('-').style('font-size: 125%')
 
                         ui.label('PM 10: ').style('font-size: 125%; font-weight: 500')
                         pm100_label = ui.label().style('font-size: 125%')
@@ -191,8 +187,7 @@ def index_page():
                                         rh_label.set_text(f'{get_latest_data('humidity', 2)}%'),
                                         dp_label.set_text(f'{get_latest_data('dew_point')} C'),
                                         co2_label.set_text(f'{get_latest_data('co2')} ppm'),
-                                        voc_raw_label.set_text(f'{get_latest_data('voc_raw')}'),
-                                        voc_index_label.set_text(f'{get_latest_data('voc_index')}'),
+                                        voc_index_label.set_text(f'{get_latest_data('voc_index')} / 500'),
                                         pm100_label.set_text(f'{get_latest_data('pm100')} μg/c^3'),
                                         pm25_label.set_text(f'{get_latest_data('pm25')} μg/c^3'),
                                         pm10_label.set_text(f'{get_latest_data('pm10')} μg/c^3'),))
