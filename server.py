@@ -1,5 +1,5 @@
 from nicegui import ui
-from utils import create_timeseries, get_y_label, get_latest_data
+from utils import create_timeseries, get_y_label, get_latest_data, aggregate_data, aggregate_time
 
 
 @ui.refreshable
@@ -9,22 +9,22 @@ def plotter(time_duration = 'Hour', data_type = "T"):
     if data_type == 'PM':
         with ui.matplotlib(figsize=(8, 4)).figure as fig:
             ax = fig.gca()
-            t3, y1 = create_timeseries(time_duration, 'PM100')
-            t2, y2 = create_timeseries(time_duration, 'PM25')
-            t1, y3 = create_timeseries(time_duration, 'PM10')
+            t1, y1 = create_timeseries(time_duration, 'PM100')
+            _, y2 = create_timeseries(time_duration, 'PM25')
+            _, y3 = create_timeseries(time_duration, 'PM10')
 
-            ax.plot(t1, y1, zorder=1, color='C2')
-            ax.plot(t2, y2, zorder=2, color='C1')
-            ax.plot(t3, y3, zorder=3, color='C0')
+            agg_t1 = aggregate_time(t1)
+            agg_y1 = aggregate_data(y1)
+            agg_y2 = aggregate_data(y2)
+            agg_y3 = aggregate_data(y3)
+
+            ax.fill_between(agg_t1, agg_y3, linewidth=0, color='C2')
+            ax.fill_between(agg_t1, agg_y2, agg_y3, linewidth=0, color='C1')
+            ax.fill_between(agg_t1, agg_y1, agg_y2, linewidth=0, color='C0')
+
             ax.set_xlabel('Time')
             ax.set_ylabel('PM (μg/c^3)')
-
-            ax.fill_between(t1, y1, color='C2')
-            ax.fill_between(t1, y1, y2, color='C1')
-            ax.fill_between(t1, y2, y3, color='C0')
-
-            ax.grid()
-            ax.legend(['PM 10', 'pm 2.5', 'pm 1.0'], loc='upper right')
+            ax.legend(['PM 1.0', 'pm 2.5', 'pm 10'], loc='upper right')
 
     else:
         with ui.matplotlib(figsize=(8, 4)).figure as fig:
@@ -49,34 +49,34 @@ def index_page():
                 with ui.card():
                     with ui.grid(columns=2):
                         ui.label('Datetime:').style('font-size: 125%; font-weight: 500')
-                        time_label = ui.label().style('font-size: 125%')
+                        time_label = ui.label('-').style('font-size: 125%')
 
                         ui.label('Temperature: ').style('font-size: 125%; font-weight: 500')
-                        temp_label = ui.label().style('font-size: 125%')
+                        temp_label = ui.label('-').style('font-size: 125%')
 
                         ui.label('Relative Humidity: ').style('font-size: 125%; font-weight: 500')
-                        rh_label = ui.label().style('font-size: 125%')
+                        rh_label = ui.label('-').style('font-size: 125%')
 
                         ui.label('Dew Point: ').style('font-size: 125%; font-weight: 500')
-                        dp_label = ui.label().style('font-size: 125%')
+                        dp_label = ui.label('-').style('font-size: 125%')
 
                         ui.label('CO2: ').style('font-size: 125%; font-weight: 500')
-                        co2_label = ui.label().style('font-size: 125%')
+                        co2_label = ui.label('-').style('font-size: 125%')
 
                         ui.label('VOC Index: ').style('font-size: 125%; font-weight: 500')
-                        voc_index_label = ui.label().style('font-size: 125%')
+                        voc_index_label = ui.label('-').style('font-size: 125%')
 
                         ui.label('NOx Index: ').style('font-size: 125%; font-weight: 500')
                         nox_index_label = ui.label('-').style('font-size: 125%')
 
                         ui.label('PM 10: ').style('font-size: 125%; font-weight: 500')
-                        pm100_label = ui.label().style('font-size: 125%')
+                        pm100_label = ui.label('-').style('font-size: 125%')
 
                         ui.label('PM 2.5: ').style('font-size: 125%; font-weight: 500')
-                        pm25_label = ui.label().style('font-size: 125%')
+                        pm25_label = ui.label('-').style('font-size: 125%')
 
                         ui.label('PM 1.0: ').style('font-size: 125%; font-weight: 500')
-                        pm10_label = ui.label().style('font-size: 125%')
+                        pm10_label = ui.label('-').style('font-size: 125%')
 
                     ui.timer(1, lambda: (time_label.set_text(get_latest_data('time')),
                                         temp_label.set_text(f'{get_latest_data('temp')} C'),

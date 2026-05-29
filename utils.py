@@ -58,7 +58,7 @@ def create_timeseries(time_duration, data_type):
         reader = csv.reader(data_log, delimiter=',')
         next(reader)
         for row in reader:
-            dt,temp,humidity,dp,co2,voc_raw,voc_index,pm10,pm25,pm100=row
+            dt,temp,humidity,dp,co2,_,voc_index,pm100,pm25,pm10=row
             datas = {"T": temp,
                      "RH": humidity,
                      "DP": dp,
@@ -94,6 +94,38 @@ def get_y_label(data_type):
     }
 
     return y_labels.get(data_type, y_labels["T"])
+
+
+def aggregate_data(data_list, n=120):
+    """Aggregate a list of data into n data points based on the specified time duration to reduce computation."""
+    if len(data_list) <= n:
+        return data_list
+
+    aggregated_data = []
+    interval = len(data_list) // n
+
+    for i in range(0, len(data_list), interval):
+        chunk = data_list[i:i + interval]
+        if chunk:
+            aggregated_data.append(sum(chunk) / len(chunk))  # Average the chunk
+
+    return aggregated_data
+
+
+def aggregate_time(time_list, n=120):
+    """Aggregate a list of datetime objects into n data objects based on the specified time duration to reduce computation."""
+    if len(time_list) <= n:
+        return time_list
+
+    aggregated_time = []
+    interval = len(time_list) // n
+
+    for i in range(0, len(time_list), interval):
+        chunk = time_list[i:i + interval]
+        if chunk:
+            aggregated_time.append(chunk[0])  # Take the first timestamp of the chunk
+
+    return aggregated_time
 
 
 ###### Logging helpers ######
