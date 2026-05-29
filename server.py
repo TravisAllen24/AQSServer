@@ -1,90 +1,10 @@
-from nicegui import ui, app
-import csv
-import datetime
-
-
-def format_value(value: str|int|float|None, precision: int=0) -> str:
-    """Format the value or return '----' if None."""
-    if value is None:
-        return "-"
-
-    if isinstance(value, str):
-        try:
-            return f"{round(float(value), precision):.{precision}f}"
-        except ValueError:
-            return value
-
-    if isinstance(value, float):
-        return f"{round(value, precision):.{precision}f}"
-
-    return str(value)
-
-
-def convert_time(time):
-    return datetime.datetime.strptime(time, '%Y-%m-%d %H:%M:%S')
-
-
-def delta_time(time_duration):
-    delta = {"Hour": datetime.timedelta(hours=1),
-             "Day": datetime.timedelta(days=1),
-             "Week": datetime.timedelta(days=7),
-             "Month": datetime.timedelta(days=30),
-             "Max": datetime.timedelta(days=365)
-             }
-
-    return delta.get(time_duration, delta["Max"])
-
-
-def create_timeseries(time_duration, data_type):
-    t=[]
-    y=[]
-    now = datetime.datetime.now()
-
-    start_time = now-delta_time(time_duration)
-
-    with open('data_log.csv', newline='') as data_log:
-        reader = csv.reader(data_log, delimiter=',')
-        next(reader)
-        for row in reader:
-            dt,temp,humidity,dp,co2,voc_raw,voc_index,pm10,pm25,pm100=row
-            datas = {"T": temp,
-                     "RH": humidity,
-                     "DP": dp,
-                     "CO2": co2,
-                     "VOC": voc_index,
-                     "PM100":pm100,
-                     "PM25":pm25,
-                     "PM10":pm10
-                     }
-
-            data = datas[data_type]
-            if dt == '0':
-                continue
-            if data == 'None':
-                continue
-            if data == '-':
-                continue
-            formatted_time = convert_time(dt)
-            if formatted_time >= start_time:
-                t.append(formatted_time)
-                y.append(float(data))
-
-    return t, y
-
-
-def get_y_label(data_type):
-    y_labels = {"T": 'Temperature (C)',
-                "RH": "Relative Humidity (%)",
-                "DP": "Dew Point (C)",
-                "CO2": "CO2 (ppm)",
-                "VOC": "VOC Index",
-    }
-
-    return y_labels.get(data_type, y_labels["T"])
+from nicegui import ui
+from utils import create_timeseries, get_y_label, get_latest_data
 
 
 @ui.refreshable
 def plotter(time_duration = 'Hour', data_type = "T"):
+    """Plot time series data based on the specified time duration and data type."""
 
     if data_type == 'PM':
         with ui.matplotlib(figsize=(8, 4)).figure as fig:
@@ -103,7 +23,8 @@ def plotter(time_duration = 'Hour', data_type = "T"):
             ax.fill_between(t1, y1, y2, color='C1')
             ax.fill_between(t1, y2, y3, color='C0')
 
-            ax.legend(['PM 1.0', 'PM 2.5', 'PM 10'], loc='upper right')
+            ax.grid()
+            ax.legend(['PM 10', 'pm 2.5', 'pm 1.0'], loc='upper right')
 
     else:
         with ui.matplotlib(figsize=(8, 4)).figure as fig:
@@ -114,34 +35,9 @@ def plotter(time_duration = 'Hour', data_type = "T"):
             ax.set_ylabel(get_y_label(data_type))
 
 
-def get_latest_data(data_type, precision=0):
-    last_row = "-,-,-,-,-,-,-,-,-,-"
-    with open('data_log.csv', newline='') as data_log:
-        reader = csv.reader(data_log, delimiter=',')
-        next(reader)
-
-        for row in reader:
-            last_row = row
-
-    dt,temp,humidity,dp,co2,voc_raw,voc_index,pm10,pm25,pm100=last_row
-
-    datas = {   "time": dt,
-                "temp": temp,
-                "humidity": humidity,
-                "dew_point": dp,
-                "co2": co2,
-                "voc_raw": voc_raw,
-                "voc_index": voc_index,
-                "pm10": pm10,
-                "pm25": pm25,
-                "pm100": pm100
-            }
-
-    return format_value(datas.get(data_type, datas["time"]), precision=precision)
-
-
 @ui.page('/')
 def index_page():
+    """Define the main page of the web application."""
     with ui.row().classes('w-full justify-center'):
         ui.label('AQS Dashboard').style('font-size: 300%; font-weight: 400')
 
@@ -215,4 +111,6 @@ def index_page():
 def main():
     ui.run(title="AQS Webserver", favicon = '☁️', reload=False, host="0.0.0.0", port=8080)
 
-main()
+
+if __name__ in {"__main__", "__mp_main__"}:
+    main()
