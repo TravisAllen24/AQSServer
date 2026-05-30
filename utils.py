@@ -46,7 +46,7 @@ def delta_time(time_duration):
 
 
 ###### Plotting helpers ######
-def create_timeseries(time_duration, data_type):
+def get_plot_data(time_duration, data_type):
     """Create time series data for plotting based on the specified time duration and data type."""
     t=[]
     y=[]
@@ -91,6 +91,8 @@ def get_y_label(data_type):
                 "DP": "Dew Point (C)",
                 "CO2": "CO2 (ppm)",
                 "VOC": "VOC Index",
+                "NOX": "NOX Index",
+                "PM": "PM (μg/m^3)"
     }
 
     return y_labels.get(data_type, y_labels["T"])
@@ -106,8 +108,8 @@ def aggregate_data(data_list, n=120):
 
     for i in range(0, len(data_list), interval):
         chunk = data_list[i:i + interval]
-        if chunk:
-            aggregated_data.append(sum(chunk) / len(chunk))  # Average the chunk
+        max_data = max(chunk)
+        aggregated_data.append(max_data)
 
     return aggregated_data
 

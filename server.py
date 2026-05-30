@@ -1,5 +1,5 @@
 from nicegui import ui
-from utils import create_timeseries, get_y_label, get_latest_data, aggregate_data, aggregate_time
+from utils import get_plot_data, get_y_label, get_latest_data, aggregate_data, aggregate_time
 
 
 @ui.refreshable
@@ -9,9 +9,9 @@ def plotter(time_duration = 'Hour', data_type = "T"):
     if data_type == 'PM':
         with ui.matplotlib(figsize=(8, 4)).figure as fig:
             ax = fig.gca()
-            t1, y1 = create_timeseries(time_duration, 'PM100')
-            _, y2 = create_timeseries(time_duration, 'PM25')
-            _, y3 = create_timeseries(time_duration, 'PM10')
+            t1, y1 = get_plot_data(time_duration, 'PM100')
+            _, y2 = get_plot_data(time_duration, 'PM25')
+            _, y3 = get_plot_data(time_duration, 'PM10')
 
             agg_t1 = aggregate_time(t1)
             agg_y1 = aggregate_data(y1)
@@ -23,12 +23,12 @@ def plotter(time_duration = 'Hour', data_type = "T"):
             ax.fill_between(agg_t1, agg_y1, agg_y2, linewidth=0, color='C0')
 
             ax.set_xlabel('Time')
-            ax.set_ylabel('PM (μg/c^3)')
-            ax.legend(['PM 1.0', 'pm 2.5', 'pm 10'], loc='upper right')
+            ax.set_ylabel(data_type)
+            ax.legend(['PM 1.0', 'pm 2.5', 'pm 10'], loc='upper left')
 
     else:
         with ui.matplotlib(figsize=(8, 4)).figure as fig:
-            t, y = create_timeseries(time_duration, data_type)
+            t, y = get_plot_data(time_duration, data_type)
             ax = fig.gca()
             ax.plot(t, y, '-')
             ax.set_xlabel('Time')
