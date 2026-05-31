@@ -20,7 +20,7 @@ class SerialCollector:
 
             except Exception as e:
                 print(f'Error: {e}')
-                log_data('-,-,-,-,-,-,-,-,-,-')
+                log_data('-,-,-,-,-,-,-,-,-,-,-,-')
 
             self.ser.reset_input_buffer()
             time.sleep(30)

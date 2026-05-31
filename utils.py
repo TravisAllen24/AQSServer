@@ -22,8 +22,8 @@ def format_value(value: str|int|float|None, precision: int=0) -> str:
 def clean_data(data):
     data = data.replace('\n', '').replace('\r', '').split('>')[-1].split(',')
 
-    if len(data) != 10:
-        data = ['0']*10
+    if len(data) != 12:
+        data = ['0']*12
 
     return data
 
@@ -58,12 +58,13 @@ def get_plot_data(time_duration, data_type):
         reader = csv.reader(data_log, delimiter=',')
         next(reader)
         for row in reader:
-            dt,temp,humidity,dp,co2,_,voc_index,pm100,pm25,pm10=row
+            dt,temp,humidity,dp,co2,_,voc_index,_,nox_index,pm100,pm25,pm10=row
             datas = {"T": temp,
                      "RH": humidity,
                      "DP": dp,
                      "CO2": co2,
                      "VOC": voc_index,
+                     "NOX": nox_index,
                      "PM100":pm100,
                      "PM25":pm25,
                      "PM10":pm10
@@ -139,7 +140,7 @@ def log_data(data):
 
 def get_latest_data(data_type, precision=0):
     """Retrieve the latest data for the specified data type from the CSV log."""
-    last_row = "-,-,-,-,-,-,-,-,-,-"
+    last_row = "-,-,-,-,-,-,-,-,-,-,-,-"
     with open('data_log.csv', newline='') as data_log:
         reader = csv.reader(data_log, delimiter=',')
         next(reader)
@@ -147,7 +148,7 @@ def get_latest_data(data_type, precision=0):
         for row in reader:
             last_row = row
 
-    dt,temp,humidity,dp,co2,voc_raw,voc_index,pm100,pm25,pm10=last_row
+    dt,temp,humidity,dp,co2,voc_raw,voc_index,nox_raw,nox_index,pm100,pm25,pm10=last_row
 
     datas = {   "time": dt,
                 "temp": temp,
@@ -156,6 +157,8 @@ def get_latest_data(data_type, precision=0):
                 "co2": co2,
                 "voc_raw": voc_raw,
                 "voc_index": voc_index,
+                "nox_raw": nox_raw,
+                "nox_index": nox_index,
                 "pm10": pm10,
                 "pm25": pm25,
                 "pm100": pm100

@@ -84,6 +84,7 @@ def index_page():
                                         dp_label.set_text(f'{get_latest_data('dew_point')} C'),
                                         co2_label.set_text(f'{get_latest_data('co2')} ppm'),
                                         voc_index_label.set_text(f'{get_latest_data('voc_index')} / 500'),
+                                        nox_index_label.set_text(f'{get_latest_data('nox_index')} / 500'),
                                         pm100_label.set_text(f'{get_latest_data('pm100')} μg/c^3'),
                                         pm25_label.set_text(f'{get_latest_data('pm25')} μg/c^3'),
                                         pm10_label.set_text(f'{get_latest_data('pm10')} μg/c^3'),))
@@ -104,7 +105,7 @@ def index_page():
                         with ui.column():
                             with ui.row().classes('w-full justify-center'):
                                 ui.label('Data type').style('font-size: 100%; font-weight: 500')
-                            toggle_2 = ui.toggle(['T', 'RH', "DP", "CO2", "VOC", "PM"],
+                            toggle_2 = ui.toggle(['T', 'RH', "DP", "CO2", "VOC", "NOX", "PM"],
                                            value='T', on_change=lambda: plotter.refresh(time_duration = toggle_1.value, data_type = toggle_2.value))
 
 
