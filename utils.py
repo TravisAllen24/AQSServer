@@ -53,12 +53,15 @@ def get_plot_data(time_duration, data_type):
     now = datetime.datetime.now()
 
     start_time = now-delta_time(time_duration)
+    start_str = start_time.strftime('%Y-%m-%d %H:%M:%S')
 
     with open('data_log.csv', newline='') as data_log:
         reader = csv.reader(data_log, delimiter=',')
         next(reader)
         for row in reader:
             dt,temp,humidity,dp,co2,_,voc_index,_,nox_index,pm100,pm25,pm10=row
+            if dt < start_str:
+                continue
             datas = {"T": temp,
                      "RH": humidity,
                      "DP": dp,
@@ -78,9 +81,8 @@ def get_plot_data(time_duration, data_type):
             if data == '-':
                 continue
             formatted_time = convert_time(dt)
-            if formatted_time >= start_time:
-                t.append(formatted_time)
-                y.append(float(data))
+            t.append(formatted_time)
+            y.append(float(data))
 
     return t, y
 
