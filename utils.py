@@ -30,7 +30,7 @@ def clean_data(data):
 ###### Time helpers ######
 def convert_time(time):
     """Convert a string time to a datetime object."""
-    return datetime.datetime.strptime(time, '%Y-%m-%d %H:%M:%S')
+    return datetime.datetime.fromisoformat(time)
 
 
 def delta_time(time_duration):
@@ -136,32 +136,3 @@ def log_data(data):
     with open('data_log.csv', mode='a', newline='') as data_log:
         writer = csv.writer(data_log)
         writer.writerow(data)
-
-
-def get_latest_data(data_type, precision=0):
-    """Retrieve the latest data for the specified data type from the CSV log."""
-    last_row = "-,-,-,-,-,-,-,-,-,-,-,-"
-    with open('data_log.csv', newline='') as data_log:
-        reader = csv.reader(data_log, delimiter=',')
-        next(reader)
-
-        for row in reader:
-            last_row = row
-
-    dt,temp,humidity,dp,co2,voc_raw,voc_index,nox_raw,nox_index,pm100,pm25,pm10=last_row
-
-    datas = {   "time": dt,
-                "temp": temp,
-                "humidity": humidity,
-                "dew_point": dp,
-                "co2": co2,
-                "voc_raw": voc_raw,
-                "voc_index": voc_index,
-                "nox_raw": nox_raw,
-                "nox_index": nox_index,
-                "pm10": pm10,
-                "pm25": pm25,
-                "pm100": pm100
-            }
-
-    return format_value(datas.get(data_type, datas["time"]), precision=precision)

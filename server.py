@@ -1,6 +1,8 @@
 from nicegui import ui
-from utils import get_plot_data, get_y_label, get_latest_data, aggregate_data, aggregate_time
+from utils import get_plot_data, get_y_label, aggregate_data, aggregate_time
+from aqs_data import AQSData
 
+aqs_data = AQSData()
 
 @ui.refreshable
 def plotter(time_duration = 'Hour', data_type = "T"):
@@ -78,16 +80,17 @@ def index_page():
                         ui.label('PM 1.0: ').style('font-size: 125%; font-weight: 500')
                         pm10_label = ui.label('-').style('font-size: 125%')
 
-                    ui.timer(1, lambda: (time_label.set_text(get_latest_data('time')),
-                                        temp_label.set_text(f'{get_latest_data('temp')} C'),
-                                        rh_label.set_text(f'{get_latest_data('humidity', 2)}%'),
-                                        dp_label.set_text(f'{get_latest_data('dew_point')} C'),
-                                        co2_label.set_text(f'{get_latest_data('co2')} ppm'),
-                                        voc_index_label.set_text(f'{get_latest_data('voc_index')} / 500'),
-                                        nox_index_label.set_text(f'{get_latest_data('nox_index')} / 500'),
-                                        pm100_label.set_text(f'{get_latest_data('pm100')} μg/c^3'),
-                                        pm25_label.set_text(f'{get_latest_data('pm25')} μg/c^3'),
-                                        pm10_label.set_text(f'{get_latest_data('pm10')} μg/c^3'),))
+                    ui.timer(30, lambda: (aqs_data.update_data(),
+                                        time_label.set_text(aqs_data.get_data('time')),
+                                        temp_label.set_text(f'{aqs_data.get_data("temp")} C'),
+                                        rh_label.set_text(f'{aqs_data.get_data("humidity", 2)}%'),
+                                        dp_label.set_text(f'{aqs_data.get_data("dew_point")} C'),
+                                        co2_label.set_text(f'{aqs_data.get_data("co2")} ppm'),
+                                        voc_index_label.set_text(f'{aqs_data.get_data("voc_index")} / 500'),
+                                        nox_index_label.set_text(f'{aqs_data.get_data("nox_index")} / 500'),
+                                        pm100_label.set_text(f'{aqs_data.get_data("pm100")} μg/c^3'),
+                                        pm25_label.set_text(f'{aqs_data.get_data("pm25")} μg/c^3'),
+                                        pm10_label.set_text(f'{aqs_data.get_data("pm10")} μg/c^3'),))
 
 
         with ui.column():
