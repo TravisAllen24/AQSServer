@@ -9,32 +9,81 @@ def plotter(time_duration = 'Hour', data_type = "T"):
     """Plot time series data based on the specified time duration and data type."""
 
     if data_type == 'PM':
-        with ui.matplotlib(figsize=(8, 4)).figure as fig:
-            ax = fig.gca()
-            t1, y1 = get_plot_data(time_duration, 'PM100')
-            _, y2 = get_plot_data(time_duration, 'PM25')
-            _, y3 = get_plot_data(time_duration, 'PM10')
 
-            agg_t1 = aggregate_time(t1)
-            agg_y1 = aggregate_data(y1)
-            agg_y2 = aggregate_data(y2)
-            agg_y3 = aggregate_data(y3)
+        t1, y1 = get_plot_data(time_duration, 'PM100')
+        _, y2 = get_plot_data(time_duration, 'PM25')
+        _, y3 = get_plot_data(time_duration, 'PM10')
 
-            ax.fill_between(agg_t1, agg_y3, linewidth=0, color='C2')
-            ax.fill_between(agg_t1, agg_y2, agg_y3, linewidth=0, color='C1')
-            ax.fill_between(agg_t1, agg_y1, agg_y2, linewidth=0, color='C0')
+        agg_t1 = aggregate_time(t1)
+        agg_y1 = aggregate_data(y1)
+        agg_y2 = aggregate_data(y2)
+        agg_y3 = aggregate_data(y3)
 
-            ax.set_xlabel('Time')
-            ax.set_ylabel(data_type)
-            ax.legend(['PM 1.0', 'pm 2.5', 'pm 10'], loc='upper left')
+        data = [
+                    {
+                        'type': 'scatter',
+                        'name': 'Trace 1',
+                        'x': agg_t1,
+                        'y': agg_y1,
+                        "fill": "tozeroy",
+                        "mode": "none",
+                        "fillcolor": '#1f77b4',
+                        "name": "PM 10"
+                    },
+                    {
+                        'type': 'scatter',
+                        'name': 'Trace 2',
+                        'x': agg_t1,
+                        'y': agg_y2,
+                        "fill": "tozeroy",
+                        "mode": "none",
+                        "fillcolor": '#ff7f0e',
+                        "name": "PM 2.5"
+                    },
+
+                    {
+                        'type': 'scatter',
+                        'name': 'Trace 3',
+                        'x': agg_t1,
+                        'y': agg_y3,
+                        "fill": "tozeroy",
+                        "mode": "none",
+                        "fillcolor": '#2ca02c',
+                        "name": "PM 1.0"
+                    }]
+
 
     else:
-        with ui.matplotlib(figsize=(8, 4)).figure as fig:
-            t, y = get_plot_data(time_duration, data_type)
-            ax = fig.gca()
-            ax.plot(t, y, '-')
-            ax.set_xlabel('Time')
-            ax.set_ylabel(get_y_label(data_type))
+        t, y = get_plot_data(time_duration, data_type)
+
+        data = [
+                    {
+                        'type': 'scatter',
+                        'name': 'Trace 1',
+                        'x': t,
+                        'y': y,
+                    },
+                ]
+
+    fig = {
+            'data': data,
+            'layout': {
+                'title': {
+                    'text': get_y_label(data_type)
+                },
+                'xaxis': {
+                    'title': {"text":'Time'}
+                },
+                'yaxis': {
+                    'title': {"text": get_y_label(data_type)}
+                },
+                # 'margin': {'l': 15, 'r': 0, 't': 0, 'b': 15},
+                'plot_bgcolor': "#FFFFFF",
+            },
+        }
+
+    ui.plotly(fig)
+
 
 
 @ui.page('/')
