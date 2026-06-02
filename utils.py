@@ -46,7 +46,7 @@ def delta_time(time_duration):
 
 
 ###### Plotting helpers ######
-def get_plot_data(time_duration, data_type):
+def get_plot_data(time_duration, data, dt):
     """Create time series data for plotting based on the specified time duration and data type."""
     t=[]
     y=[]
@@ -55,34 +55,20 @@ def get_plot_data(time_duration, data_type):
     start_time = now-delta_time(time_duration)
     start_str = start_time.strftime('%Y-%m-%d %H:%M:%S')
 
-    with open('data_log.csv', newline='') as data_log:
-        reader = csv.reader(data_log, delimiter=',')
-        next(reader)
-        for row in reader:
-            dt,temp,humidity,dp,co2,_,voc_index,_,nox_index,pm100,pm25,pm10=row
-            if dt < start_str:
-                continue
-            datas = {"T": temp,
-                     "RH": humidity,
-                     "DP": dp,
-                     "CO2": co2,
-                     "VOC": voc_index,
-                     "NOX": nox_index,
-                     "PM100":pm100,
-                     "PM25":pm25,
-                     "PM10":pm10
-                     }
-
-            data = datas[data_type]
-            if dt == '0':
-                continue
-            if data == 'None':
-                continue
-            if data == '-':
-                continue
-            formatted_time = convert_time(dt)
-            t.append(formatted_time)
-            y.append(float(data))
+    for dt, data in zip(dt, data):
+        if dt < start_str:
+            continue
+        if dt == '0':
+            continue
+        if not data:
+            continue
+        if data == 'None':
+            continue
+        if data == '-':
+            continue
+        formatted_time = convert_time(dt)
+        t.append(formatted_time)
+        y.append(float(data))
 
     return t, y
 
