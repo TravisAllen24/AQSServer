@@ -167,17 +167,21 @@ def index_page():
                         ui.label('PM 1.0: ').style('font-size: 125%; font-weight: 500')
                         pm10_label = ui.label('-').style('font-size: 125%')
 
-                    ui.timer(30, lambda: (sync_missing_data(),
-                                        time_label.set_text(dts[-1]),
-                                        temp_label.set_text(f'{temps[-1]} C'),
-                                        rh_label.set_text(f'{humiditys[-1]}%'),
-                                        dp_label.set_text(f'{dew_points[-1]} C'),
-                                        co2_label.set_text(f'{co2s[-1]} ppm'),
-                                        voc_index_label.set_text(f'{voc_indexs[-1]} / 500'),
-                                        nox_index_label.set_text(f'{nox_indexs[-1]} / 500'),
-                                        pm100_label.set_text(f'{pm100s[-1]} μg/c^3'),
-                                        pm25_label.set_text(f'{pm25s[-1]} μg/c^3'),
-                                        pm10_label.set_text(f'{pm10s[-1]} μg/c^3'),))
+                    def update_labels():
+                        sync_missing_data()
+                        if dts:
+                            time_label.set_text(dts[-1])
+                            temp_label.set_text(temps[-1])
+                            rh_label.set_text(humiditys[-1])
+                            dp_label.set_text(dew_points[-1])
+                            co2_label.set_text(co2s[-1])
+                            voc_index_label.set_text(voc_indexs[-1])
+                            nox_index_label.set_text(nox_indexs[-1])
+                            pm100_label.set_text(pm100s[-1])
+                            pm25_label.set_text(pm25s[-1])
+                            pm10_label.set_text(pm10s[-1])
+
+                    ui.timer(30, update_labels)
 
 
         with ui.column():
