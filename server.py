@@ -1,38 +1,6 @@
 import csv
 
-import csv
-
 from nicegui import ui
-from utils import get_y_label, aggregate_data_max, aggregate_data_avg, aggregate_time, load_data, format_value, get_relevant_data
-
-
-dts,temps,humiditys,dew_points,co2s,voc_raws,voc_indexs,nox_raws,nox_indexs,pm100s,pm25s,pm10s = load_data()
-
-
-def get_latest_data():
-    """Read only the last row of the CSV and append to the module-level lists."""
-    with open('data_log.csv', newline='') as f:
-        last_row = None
-        for last_row in csv.reader(f):
-            pass  # iterate to end to get last row
-        if last_row is None:
-            return
-
-    dt, temp, humidity, dew_point, co2, voc_raw, voc_index, nox_raw, nox_index, pm100, pm25, pm10 = last_row
-
-    dts.append(dt)
-    temps.append(format_value(temp, 2))
-    humiditys.append(format_value(humidity, 2))
-    dew_points.append(format_value(dew_point, 2))
-    co2s.append(format_value(co2))
-    voc_raws.append(format_value(voc_raw))
-    voc_indexs.append(format_value(voc_index))
-    nox_raws.append(format_value(nox_raw))
-    nox_indexs.append(format_value(nox_index))
-    pm100s.append(format_value(pm100))
-    pm25s.append(format_value(pm25))
-    pm10s.append(format_value(pm10))
-
 from utils import get_y_label, aggregate_data_max, aggregate_data_avg, aggregate_time, load_data, format_value, get_relevant_data
 
 
@@ -65,7 +33,6 @@ def get_latest_data():
 
 
 @ui.refreshable
-def plotter(timespan="Hour", data_type="T"):
 def plotter(timespan="Hour", data_type="T"):
     """Plot time series data based on the specified time duration and data type."""
 
@@ -258,12 +225,10 @@ def index_page():
                                 ui.label('Time period').style('font-size: 100%; font-weight: 500')
                             toggle_1 = ui.toggle(['Hour', 'Day', "Week", "Month", "Max"],
                                             value='Hour', on_change=lambda: plotter.refresh(timespan = toggle_1.value, data_type = toggle_2.value))
-                                            value='Hour', on_change=lambda: plotter.refresh(timespan = toggle_1.value, data_type = toggle_2.value))
                         with ui.column():
                             with ui.row().classes('w-full justify-center'):
                                 ui.label('Data type').style('font-size: 100%; font-weight: 500')
                             toggle_2 = ui.toggle(['T', 'RH', "DP", "CO2", "VOC", "NOX", "PM"],
-                                           value='T', on_change=lambda: plotter.refresh(timespan = toggle_1.value, data_type = toggle_2.value))
                                            value='T', on_change=lambda: plotter.refresh(timespan = toggle_1.value, data_type = toggle_2.value))
 
 
