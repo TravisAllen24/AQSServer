@@ -48,11 +48,11 @@ def plotter(timespan="Hour", data_type="T"):
         agg_y3 = aggregate_data_max(y3)
 
         data = [
-                    {
+                {
                         'type': 'scatter',
-                        'name': 'Trace 1',
+                        'name': 'Trace 3',
                         'x': agg_t1,
-                        'y': agg_y1,
+                        'y': agg_y3,
                         "fill": "tozeroy",
                         "mode": "none",
                         "fillcolor": '#1f77b4',
@@ -68,17 +68,16 @@ def plotter(timespan="Hour", data_type="T"):
                         "fillcolor": '#ff7f0e',
                         "name": "PM 2.5"
                     },
-
                     {
                         'type': 'scatter',
-                        'name': 'Trace 3',
+                        'name': 'Trace 1',
                         'x': agg_t1,
-                        'y': agg_y3,
+                        'y': agg_y1,
                         "fill": "tozeroy",
                         "mode": "none",
                         "fillcolor": '#2ca02c',
                         "name": "PM 1.0"
-                    }]
+                    },]
 
     else:
 
