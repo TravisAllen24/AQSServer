@@ -19,6 +19,22 @@ def format_value(value: str|int|float|None, precision: int=0) -> str:
     return str(value)
 
 
+def get_relevant_data(data_list, time_duration, dts):
+    """Filter data based on the specified time duration."""
+    now = datetime.datetime.now()
+    start_time = now - delta_time(time_duration)
+    start_str = start_time.strftime('%Y-%m-%d %H:%M:%S')
+    relevant_time = []
+    relevant_data = []
+    for dt, data in zip(dts, data_list):
+        if dt >= start_str:
+            relevant_time.append(dt)
+            relevant_data.append(data)
+
+    return relevant_time, relevant_data
+
+
+
 def clean_data(data):
     data = data.replace('\n', '').replace('\r', '').split('>')[-1].split(',')
 
@@ -46,47 +62,6 @@ def delta_time(time_duration):
 
 
 ###### Plotting helpers ######
-def get_plot_data(time_duration, data_type):
-    """Create time series data for plotting based on the specified time duration and data type."""
-    t=[]
-    y=[]
-    now = datetime.datetime.now()
-
-    start_time = now-delta_time(time_duration)
-    start_str = start_time.strftime('%Y-%m-%d %H:%M:%S')
-
-    with open('data_log.csv', newline='') as data_log:
-        reader = csv.reader(data_log, delimiter=',')
-        next(reader)
-        for row in reader:
-            dt,temp,humidity,dp,co2,_,voc_index,_,nox_index,pm100,pm25,pm10=row
-            if dt < start_str:
-                continue
-            datas = {"T": temp,
-                     "RH": humidity,
-                     "DP": dp,
-                     "CO2": co2,
-                     "VOC": voc_index,
-                     "NOX": nox_index,
-                     "PM100":pm100,
-                     "PM25":pm25,
-                     "PM10":pm10
-                     }
-
-            data = datas[data_type]
-            if dt == '0':
-                continue
-            if data == 'None':
-                continue
-            if data == '-':
-                continue
-            formatted_time = convert_time(dt)
-            t.append(formatted_time)
-            y.append(float(data))
-
-    return t, y
-
-
 def get_y_label(data_type):
     """Return the appropriate y-axis label based on the data type."""
     y_labels = {"T": 'Temperature (C)',
@@ -101,7 +76,17 @@ def get_y_label(data_type):
     return y_labels.get(data_type, y_labels["T"])
 
 
-def aggregate_data(data_list, n=120):
+def aggregate_data_avg(data, n=500):
+    if len(data) <= n:
+        return data
+    n = len(data) // n
+    return [
+        sum(float(v) for v in data[i:i+n] if v != '-') / max(sum(1 for v in data[i:i+n] if v != '-'), 1)
+        for i in range(0, len(data), n)
+    ]
+
+
+def aggregate_data_max(data_list, n=120):
     """Aggregate a list of data into n data points based on the specified time duration to reduce computation."""
     if len(data_list) <= n:
         return data_list
@@ -117,7 +102,7 @@ def aggregate_data(data_list, n=120):
     return aggregated_data
 
 
-def aggregate_time(time_list, n=120):
+def aggregate_time(time_list, n=500):
     """Aggregate a list of datetime objects into n data objects based on the specified time duration to reduce computation."""
     if len(time_list) <= n:
         return time_list
@@ -138,3 +123,25 @@ def log_data(data):
     with open('data_log.csv', mode='a', newline='') as data_log:
         writer = csv.writer(data_log)
         writer.writerow(data)
+
+def load_data():
+    dts,temps,humiditys,dew_points,co2s,voc_raws,voc_indexs,nox_raws,nox_indexs,pm100s,pm25s,pm10s = [], [], [], [], [], [], [], [], [], [], [], []
+    with open('data_log.csv', newline='') as f:
+        reader = csv.reader(f)
+        next(reader)
+        for row in reader:
+            dt,temp,humidity,dew_point,co2,voc_raw,voc_index,nox_raw,nox_index,pm100,pm25,pm10=row
+            dts.append(format_value(dt))
+            temps.append(format_value(temp, 2))
+            humiditys.append(format_value(humidity, 2))
+            dew_points.append(format_value(dew_point, 2))
+            co2s.append(format_value(co2))
+            voc_raws.append(format_value(voc_raw))
+            voc_indexs.append(format_value(voc_index))
+            nox_raws.append(format_value(nox_raw))
+            nox_indexs.append(format_value(nox_index))
+            pm100s.append(format_value(pm100))
+            pm25s.append(format_value(pm25))
+            pm10s.append(format_value(pm10))
+
+    return dts,temps,humiditys,dew_points,co2s,voc_raws,voc_indexs,nox_raws,nox_indexs,pm100s,pm25s,pm10s
