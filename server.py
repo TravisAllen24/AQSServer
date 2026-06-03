@@ -106,7 +106,7 @@ def plotter(timespan="Hour", data_type="T"):
             'data': data,
             'layout': {
                 'title': {
-                    'text': get_y_label(data_type) + f' over Time ({timespan})',
+                    'text': get_y_label(data_type) + f' over Time (1 {timespan})',
                 },
                 'xaxis': {
                     'title': {"text":'Time'}
