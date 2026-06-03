@@ -70,7 +70,7 @@ def get_y_label(data_type):
                 "CO2": "CO2 (ppm)",
                 "VOC": "VOC Index",
                 "NOX": "NOX Index",
-                "PM": "PM (μg/m^3)"
+                "PM": "PM (μg/m³)"
     }
 
     return y_labels.get(data_type, y_labels["T"])
