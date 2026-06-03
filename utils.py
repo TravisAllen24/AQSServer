@@ -144,4 +144,4 @@ def load_data():
             pm25s.append(format_value(pm25))
             pm10s.append(format_value(pm10))
 
-    return dts,temps,humiditys,dew_points,co2s,voc_raws,voc_indexs,nox_raws,nox_indexs,pm10s,pm25s,pm100s
+    return dts,temps,humiditys,dew_points,co2s,voc_raws,voc_indexs,nox_raws,nox_indexs,pm100s,pm25s,pm10s
