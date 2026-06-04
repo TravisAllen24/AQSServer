@@ -106,7 +106,7 @@ def plotter(timespan="Hour", data_type="T"):
             'data': data,
             'layout': {
                 'title': {
-                    'text': get_y_label(data_type) + f' over Time (1 {timespan})',
+                    'text': get_y_label(data_type) + f' over Time ({"Max" if timespan == "Max" else f"1 {timespan}"})',
                 },
                 'xaxis': {
                     'title': {"text":'Time'}
@@ -204,7 +204,7 @@ def index_page():
 
 
 def main():
-    ui.run(title="AQS Webserver", favicon = '☁️', reload=False, host="0.0.0.0", port=8080)
+    ui.run(title="AQS Webserver", favicon = '☁️', host="0.0.0.0", port=8080)
 
 
 if __name__ in {"__main__", "__mp_main__"}:
