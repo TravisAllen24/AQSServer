@@ -31,8 +31,18 @@ def sync_missing_data():
 
 
 @ui.refreshable
-def plotter(timespan="Hour", data_type="T"):
+def plotter(timespan="Hour", data_type="T", is_dark=False):
     """Plot time series data based on the specified time duration and data type."""
+
+    paper_color = "#222222" if is_dark else None
+    bg_color =  "#222222" if is_dark else "#FFFFFF"
+    grid_color = "#303030" if is_dark else '#EEEEEE'
+    text_color = "#FFFFFF" if is_dark else None
+    line_color = '#686ffc' if is_dark else '#1f77b4'
+    pm100_color = "#4ba3e3" if is_dark else '#1f77b4'
+    pm25_color  = "#ff9f43" if is_dark else '#ff7f0e'
+    pm10_color  = "#51cf66" if is_dark else '#2ca02c'
+
 
     if data_type == 'PM':
 
@@ -53,7 +63,7 @@ def plotter(timespan="Hour", data_type="T"):
                         'y': agg_y3,
                         "fill": "tozeroy",
                         "mode": "none",
-                        "fillcolor": '#1f77b4',
+                        "fillcolor": pm100_color,
                         "name": "PM 10"
                     },
                     {
@@ -63,7 +73,7 @@ def plotter(timespan="Hour", data_type="T"):
                         'y': agg_y2,
                         "fill": "tozeroy",
                         "mode": "none",
-                        "fillcolor": '#ff7f0e',
+                        "fillcolor": pm25_color,
                         "name": "PM 2.5"
                     },
                     {
@@ -73,7 +83,7 @@ def plotter(timespan="Hour", data_type="T"):
                         'y': agg_y1,
                         "fill": "tozeroy",
                         "mode": "none",
-                        "fillcolor": '#2ca02c',
+                        "fillcolor": pm10_color,
                         "name": "PM 1.0"
                     },]
 
@@ -99,27 +109,40 @@ def plotter(timespan="Hour", data_type="T"):
                         'name': 'Trace 1',
                         'x': agg_t,
                         'y': agg_y,
+                        'line': {
+                        'color': line_color},
                     },
                 ]
 
-    fig = {
+    fig_config = {
             'data': data,
             'layout': {
                 'title': {
                     'text': get_y_label(data_type) + f' over Time ({"Max" if timespan == "Max" else f"1 {timespan}"})',
+                    'font': {'color': text_color}
                 },
                 'xaxis': {
-                    'title': {"text":'Time'}
+                    'title': {"text":'Time',
+                              'font': {'color': text_color}},
+                    'gridcolor': grid_color,
+                    'tickfont': {'color': text_color},
+                    'zerolinecolor': grid_color,
                 },
                 'yaxis': {
-                    'title': {"text": get_y_label(data_type)}
+                    'title': {"text": get_y_label(data_type),
+                              'font': {'color': text_color}},
+                    'gridcolor': grid_color,
+                    'tickfont': {'color': text_color},
+                    'zerolinecolor': grid_color,
                 },
-                # 'margin': {'l': 15, 'r': 0, 't': 0, 'b': 15},
-                'plot_bgcolor': "#FFFFFF",
+                'plot_bgcolor': bg_color,
+                'paper_bgcolor': paper_color,
             },
         }
 
-    ui.plotly(fig)
+    ui.plotly(fig_config)
+
+
 
 
 @ui.page('/')
@@ -195,16 +218,19 @@ def index_page():
                             with ui.row().classes('w-full justify-center'):
                                 ui.label('Time period').style('font-size: 100%; font-weight: 500')
                             toggle_1 = ui.toggle(['Hour', 'Day', "Week", "Month", "Max"],
-                                            value='Hour', on_change=lambda: plotter.refresh(timespan = toggle_1.value, data_type = toggle_2.value))
+                                            value='Hour', on_change=lambda: plotter.refresh(timespan = toggle_1.value, data_type = toggle_2.value, is_dark = switch.value))
                         with ui.column():
                             with ui.row().classes('w-full justify-center'):
                                 ui.label('Data type').style('font-size: 100%; font-weight: 500')
                             toggle_2 = ui.toggle(['T', 'RH', "DP", "CO2", "VOC", "NOX", "PM"],
-                                           value='T', on_change=lambda: plotter.refresh(timespan = toggle_1.value, data_type = toggle_2.value))
+                                           value='T', on_change=lambda: plotter.refresh(timespan = toggle_1.value, data_type = toggle_2.value, is_dark = switch.value))
 
+    with ui.footer().classes('w-full justify-end items-end').style('background-color: transparent; border-top: none;'):
+            dark = ui.dark_mode()
+            switch = ui.switch(on_change=lambda: plotter.refresh(timespan = toggle_1.value, data_type = toggle_2.value, is_dark = switch.value)).bind_value(dark).style('color: grey')
 
 def main():
-    ui.run(title="AQS Webserver", favicon = '☁️', host="0.0.0.0", port=8080)
+    ui.run(title="AQS Webserver", favicon = '☁️', host="0.0.0.0", port=8080, reload=False)
 
 
 if __name__ in {"__main__", "__mp_main__"}:
