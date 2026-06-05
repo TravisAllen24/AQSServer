@@ -227,7 +227,7 @@ def index_page():
 
     with ui.footer().classes('w-full justify-end items-end').style('background-color: transparent; border-top: none;'):
             dark = ui.dark_mode()
-            switch = ui.switch(on_change=lambda: plotter.refresh(timespan = toggle_1.value, data_type = toggle_2.value, is_dark = switch.value)).bind_value(dark).style('color: grey')
+            switch = ui.switch('Dark mode', on_change=lambda: plotter.refresh(timespan = toggle_1.value, data_type = toggle_2.value, is_dark = switch.value)).bind_value(dark).style('color: grey')
 
 def main():
     ui.run(title="AQS Webserver", favicon = '☁️', host="0.0.0.0", port=8080, reload=False)
