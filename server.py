@@ -140,7 +140,7 @@ def plotter(timespan="Hour", data_type="T", is_dark=False):
             },
         }
 
-    ui.plotly(fig_config)
+    ui.plotly(fig_config).classes('w-full h-full')
 
 
 
@@ -211,7 +211,7 @@ def index_page():
             with ui.row().classes('w-full justify-center'):
                 ui.label('Data Time Trend').style('font-size: 125%; font-weight: 500')
             with ui.card_actions():
-                with ui.card():
+                with ui.card().classes('w-full md:w-[700px] mx-auto overflow-hidden p-2'):
                     plotter()
                     with ui.row().classes('w-full justify-center'):
                         with ui.column():
