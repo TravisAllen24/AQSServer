@@ -16,6 +16,9 @@ class SerialCollector:
             try:
                 raw_data = self.ser.readline().decode('ascii')
                 cleaned_data = clean_data(raw_data)
+                if not cleaned_data:
+                   continue
+                
                 log_data(cleaned_data)
 
             except Exception as e:

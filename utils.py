@@ -20,10 +20,13 @@ def format_value(value: str|int|float|None, precision: int=0) -> str:
 
 
 def clean_data(data):
+    if '>' not in data:
+        return None
+    
     data = data.replace('\n', '').replace('\r', '').split('>')[-1].split(',')
 
     if len(data) != 12:
-        data = ['0']*12
+        return None
 
     return data
 
