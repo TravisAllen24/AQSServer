@@ -34,12 +34,14 @@ def get_relevant_data(data_list, time_duration, dts):
     return relevant_time, relevant_data
 
 
-
 def clean_data(data):
+    if '>' not in data:
+        return None
+    
     data = data.replace('\n', '').replace('\r', '').split('>')[-1].split(',')
 
     if len(data) != 12:
-        data = ['0']*12
+        return None
 
     return data
 
