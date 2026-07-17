@@ -35,15 +35,12 @@ def get_relevant_data(data_list, time_duration, dts):
 
 
 def clean_data(data):
-    if '>' not in data:
-        return None
-    
-    data = data.replace('\n', '').replace('\r', '').split('>')[-1].split(',')
+    data = data.replace('\n', '').replace('\r', '').split(',')
 
-    if len(data) != 12:
+    if len(data) != 13 or data[0] != "$AQS":
         return None
 
-    return data
+    return data[1:]
 
 ###### Time helpers ######
 def convert_time(time):
