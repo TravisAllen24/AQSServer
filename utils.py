@@ -97,7 +97,7 @@ def aggregate_data_max(data_list, n=120):
 
     for i in range(0, len(data_list), interval):
         chunk = data_list[i:i + interval]
-        max_data = max(int(v) for v in chunk)
+        max_data = max(v for v in chunk)
         aggregated_data.append(max_data)
 
     return aggregated_data
