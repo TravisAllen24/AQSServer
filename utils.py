@@ -1,20 +1,22 @@
 import datetime
 import csv
+from typing import Any
+from contextlib import suppress
 
 ### Formatting helpers ###
-def format_value(value: str|int|float|None, precision: int=0) -> str:
+def format_value(value: Any, precision: int = 0) -> str | int | float:
     """Format the value or return '-' if None."""
     if value is None:
         return "-"
 
     if isinstance(value, str):
-        try:
-            return f"{round(float(value), precision):.{precision}f}"
-        except ValueError:
-            return value
+        for parse in (int, float):
+            with suppress(ValueError):
+                return round(parse(value), precision)
+        return value
 
-    if isinstance(value, float):
-        return f"{round(value, precision):.{precision}f}"
+    if isinstance(value, (int, float)):
+        return round(value, precision)
 
     return str(value)
 
@@ -95,7 +97,7 @@ def aggregate_data_max(data_list, n=120):
 
     for i in range(0, len(data_list), interval):
         chunk = data_list[i:i + interval]
-        max_data = max(chunk)
+        max_data = max(int(v) for v in chunk)
         aggregated_data.append(max_data)
 
     return aggregated_data
