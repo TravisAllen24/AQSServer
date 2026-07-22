@@ -5,7 +5,7 @@ from utils import clean_data, log_data
 
 class SerialCollector:
 
-    def __init__(self, port="COM4"):
+    def __init__(self, port="/dev/aqs-sensor"):
         self.ser = serial.Serial(baudrate = 115200, port=port)
         self.ser.reset_input_buffer()
 
@@ -23,7 +23,7 @@ class SerialCollector:
 
             except Exception as e:
                 print(f'Error: {e}')
-                log_data('-,-,-,-,-,-,-,-,-,-,-,-')
+                log_data(['-']*12)
 
             self.ser.reset_input_buffer()
             time.sleep(30)

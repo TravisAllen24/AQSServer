@@ -1,45 +1,155 @@
-from nicegui import ui
-from utils import get_plot_data, get_y_label, aggregate_data, aggregate_time
-from aqs_data import AQSData
+import csv
 
-aqs_data = AQSData()
+from nicegui import ui
+from utils import get_y_label, aggregate_data_max, aggregate_data_avg, aggregate_time, load_data, format_value, get_relevant_data
+
+dts, temps, humiditys, dew_points, co2s, voc_raws, voc_indexs, nox_raws, nox_indexs, pm100s, pm25s, pm10s = load_data()
+
+def sync_missing_data():
+    """Append any rows from the CSV newer than the last cached entry."""
+    if not dts:
+        return
+    last_dt = dts[-1]
+    with open('data_log.csv', newline='') as f:
+        reader = csv.reader(f)
+        next(reader)  # skip header
+        for row in reader:
+            dt = row[0]
+            if dt > last_dt:
+                dts.append(dt)
+                temps.append(format_value(row[1], 2))
+                humiditys.append(format_value(row[2], 2))
+                dew_points.append(format_value(row[3], 2))
+                co2s.append(format_value(row[4]))
+                voc_raws.append(format_value(row[5]))
+                voc_indexs.append(format_value(row[6]))
+                nox_raws.append(format_value(row[7]))
+                nox_indexs.append(format_value(row[8]))
+                pm100s.append(format_value(row[9]))
+                pm25s.append(format_value(row[10]))
+                pm10s.append(format_value(row[11]))
+
 
 @ui.refreshable
-def plotter(time_duration = 'Hour', data_type = "T"):
+def plotter(timespan="Hour", data_type="T", is_dark=False):
     """Plot time series data based on the specified time duration and data type."""
 
+    paper_color = "#222222" if is_dark else None
+    bg_color =  "#222222" if is_dark else "#FFFFFF"
+    grid_color = "#303030" if is_dark else '#EEEEEE'
+    text_color = "#FFFFFF" if is_dark else None
+    line_color = '#686ffc' if is_dark else '#1f77b4'
+    pm100_color = "#4ba3e3" if is_dark else '#1f77b4'
+    pm25_color  = "#ff9f43" if is_dark else '#ff7f0e'
+    pm10_color  = "#51cf66" if is_dark else '#2ca02c'
+
+
     if data_type == 'PM':
-        with ui.matplotlib(figsize=(8, 4)).figure as fig:
-            ax = fig.gca()
-            t1, y1 = get_plot_data(time_duration, 'PM100')
-            _, y2 = get_plot_data(time_duration, 'PM25')
-            _, y3 = get_plot_data(time_duration, 'PM10')
 
-            agg_t1 = aggregate_time(t1)
-            agg_y1 = aggregate_data(y1)
-            agg_y2 = aggregate_data(y2)
-            agg_y3 = aggregate_data(y3)
+        t1, y1 = get_relevant_data(pm10s, timespan, dts)
+        _, y2 = get_relevant_data(pm25s, timespan, dts)
+        _, y3 = get_relevant_data(pm100s, timespan, dts)
 
-            ax.fill_between(agg_t1, agg_y3, linewidth=0, color='C2')
-            ax.fill_between(agg_t1, agg_y2, agg_y3, linewidth=0, color='C1')
-            ax.fill_between(agg_t1, agg_y1, agg_y2, linewidth=0, color='C0')
+        agg_t1 = aggregate_time(t1, n=120)
+        agg_y1 = aggregate_data_max(y1)
+        agg_y2 = aggregate_data_max(y2)
+        agg_y3 = aggregate_data_max(y3)
 
-            ax.set_xlabel('Time')
-            ax.set_ylabel(data_type)
-            ax.legend(['PM 1.0', 'pm 2.5', 'pm 10'], loc='upper left')
+        data = [
+                {
+                        'type': 'scatter',
+                        'name': 'Trace 3',
+                        'x': agg_t1,
+                        'y': agg_y3,
+                        "fill": "tozeroy",
+                        "mode": "none",
+                        "fillcolor": pm100_color,
+                        "name": "PM 10"
+                    },
+                    {
+                        'type': 'scatter',
+                        'name': 'Trace 2',
+                        'x': agg_t1,
+                        'y': agg_y2,
+                        "fill": "tozeroy",
+                        "mode": "none",
+                        "fillcolor": pm25_color,
+                        "name": "PM 2.5"
+                    },
+                    {
+                        'type': 'scatter',
+                        'name': 'Trace 1',
+                        'x': agg_t1,
+                        'y': agg_y1,
+                        "fill": "tozeroy",
+                        "mode": "none",
+                        "fillcolor": pm10_color,
+                        "name": "PM 1.0"
+                    },]
 
     else:
-        with ui.matplotlib(figsize=(8, 4)).figure as fig:
-            t, y = get_plot_data(time_duration, data_type)
-            ax = fig.gca()
-            ax.plot(t, y, '-')
-            ax.set_xlabel('Time')
-            ax.set_ylabel(get_y_label(data_type))
+
+        ys = {
+            'T': temps,
+            'RH': humiditys,
+            'DP': dew_points,
+            'CO2': co2s,
+            'VOC': voc_indexs,
+            'NOX': nox_indexs
+        }.get(data_type, temps)
+
+        t, y = get_relevant_data(ys, timespan, dts)
+        agg_t = aggregate_time(t)
+        agg_y = aggregate_data_avg(y)
+
+
+        data = [
+                    {
+                        'type': 'scatter',
+                        'name': 'Trace 1',
+                        'x': agg_t,
+                        'y': agg_y,
+                        'line': {
+                        'color': line_color},
+                    },
+                ]
+
+    fig_config = {
+            'data': data,
+            'layout': {
+                'title': {
+                    'text': get_y_label(data_type) + f' over Time ({"Max" if timespan == "Max" else f"1 {timespan}"})',
+                    'font': {'color': text_color}
+                },
+                'xaxis': {
+                    'title': {"text":'Time',
+                              'font': {'color': text_color}},
+                    'gridcolor': grid_color,
+                    'tickfont': {'color': text_color},
+                    'zerolinecolor': grid_color,
+                },
+                'yaxis': {
+                    'title': {"text": get_y_label(data_type),
+                              'font': {'color': text_color}},
+                    'gridcolor': grid_color,
+                    'tickfont': {'color': text_color},
+                    'zerolinecolor': grid_color,
+                },
+                'plot_bgcolor': bg_color,
+                'paper_bgcolor': paper_color,
+            },
+        }
+
+    ui.plotly(fig_config).classes('w-full h-full')
+
+
 
 
 @ui.page('/')
 def index_page():
     """Define the main page of the web application."""
+    sync_missing_data()
+
     with ui.row().classes('w-full justify-center'):
         ui.label('AQS Dashboard').style('font-size: 300%; font-weight: 400')
 
@@ -80,40 +190,47 @@ def index_page():
                         ui.label('PM 1.0: ').style('font-size: 125%; font-weight: 500')
                         pm10_label = ui.label('-').style('font-size: 125%')
 
-                    ui.timer(30, lambda: (aqs_data.update_data(),
-                                        time_label.set_text(aqs_data.get_data('time')),
-                                        temp_label.set_text(f'{aqs_data.get_data("temp")} C'),
-                                        rh_label.set_text(f'{aqs_data.get_data("humidity", 2)}%'),
-                                        dp_label.set_text(f'{aqs_data.get_data("dew_point")} C'),
-                                        co2_label.set_text(f'{aqs_data.get_data("co2")} ppm'),
-                                        voc_index_label.set_text(f'{aqs_data.get_data("voc_index")} / 500'),
-                                        nox_index_label.set_text(f'{aqs_data.get_data("nox_index")} / 500'),
-                                        pm100_label.set_text(f'{aqs_data.get_data("pm100")} μg/c^3'),
-                                        pm25_label.set_text(f'{aqs_data.get_data("pm25")} μg/c^3'),
-                                        pm10_label.set_text(f'{aqs_data.get_data("pm10")} μg/c^3'),))
+                    def update_labels():
+                        sync_missing_data()
+                        if dts:
+                            time_label.set_text(dts[-1])
+                            temp_label.set_text(f'{temps[-1]} C')
+                            rh_label.set_text(f'{humiditys[-1]}%')
+                            dp_label.set_text(f'{dew_points[-1]} C')
+                            co2_label.set_text(f'{co2s[-1]} ppm')
+                            voc_index_label.set_text(f'{voc_indexs[-1]} / 500')
+                            nox_index_label.set_text(f'{nox_indexs[-1]} / 500')
+                            pm100_label.set_text(f'{pm100s[-1]} μg/m³')
+                            pm25_label.set_text(f'{pm25s[-1]} μg/m³')
+                            pm10_label.set_text(f'{pm10s[-1]} μg/m³')
+
+                    ui.timer(30, update_labels)
 
 
         with ui.column():
             with ui.row().classes('w-full justify-center'):
                 ui.label('Data Time Trend').style('font-size: 125%; font-weight: 500')
             with ui.card_actions():
-                with ui.card():
+                with ui.card().classes('w-full md:w-[700px] mx-auto overflow-hidden p-2'):
                     plotter()
                     with ui.row().classes('w-full justify-center'):
                         with ui.column():
                             with ui.row().classes('w-full justify-center'):
                                 ui.label('Time period').style('font-size: 100%; font-weight: 500')
                             toggle_1 = ui.toggle(['Hour', 'Day', "Week", "Month", "Max"],
-                                            value='Hour', on_change=lambda: plotter.refresh(time_duration = toggle_1.value, data_type = toggle_2.value))
+                                            value='Hour', on_change=lambda: plotter.refresh(timespan = toggle_1.value, data_type = toggle_2.value, is_dark = switch.value))
                         with ui.column():
                             with ui.row().classes('w-full justify-center'):
                                 ui.label('Data type').style('font-size: 100%; font-weight: 500')
                             toggle_2 = ui.toggle(['T', 'RH', "DP", "CO2", "VOC", "NOX", "PM"],
-                                           value='T', on_change=lambda: plotter.refresh(time_duration = toggle_1.value, data_type = toggle_2.value))
+                                           value='T', on_change=lambda: plotter.refresh(timespan = toggle_1.value, data_type = toggle_2.value, is_dark = switch.value))
 
+    with ui.footer().classes('w-full justify-end items-end').style('background-color: transparent; border-top: none;'):
+            dark = ui.dark_mode()
+            switch = ui.switch('Dark mode', on_change=lambda: plotter.refresh(timespan = toggle_1.value, data_type = toggle_2.value, is_dark = switch.value)).bind_value(dark).style('color: grey')
 
 def main():
-    ui.run(title="AQS Webserver", favicon = '☁️', reload=False, host="0.0.0.0", port=8080)
+    ui.run(title="AQS Webserver", favicon = '☁️', host="0.0.0.0", port=8080, reload=False)
 
 
 if __name__ in {"__main__", "__mp_main__"}:
