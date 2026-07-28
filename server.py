@@ -1,7 +1,16 @@
 import csv
 
 from nicegui import ui
+from event_logger import get_logger
 from utils import get_y_label, aggregate_data_max, aggregate_data_avg, aggregate_time, load_data, format_value, get_relevant_data
+
+logger = get_logger("AQSWebServer", "webserver.log")
+
+def log_error(exception: Exception):
+    # exc_info=True prints the entire, multi-line stack trace to your terminal
+    logger.error(f"Framework Exception Caught: {exception}", exc_info=True)
+
+app.on_exception(log_error)
 
 dts, temps, humiditys, dew_points, co2s, voc_raws, voc_indexs, nox_raws, nox_indexs, pm100s, pm25s, pm10s = load_data()
 
@@ -142,9 +151,6 @@ def plotter(timespan="Hour", data_type="T", is_dark=False):
 
     ui.plotly(fig_config).classes('w-full h-full')
 
-
-
-
 @ui.page('/')
 def index_page():
     """Define the main page of the web application."""
@@ -228,6 +234,7 @@ def index_page():
     with ui.footer().classes('w-full justify-end items-end').style('background-color: transparent; border-top: none;'):
             dark = ui.dark_mode()
             switch = ui.switch('Dark mode', on_change=lambda: plotter.refresh(timespan = toggle_1.value, data_type = toggle_2.value, is_dark = switch.value)).bind_value(dark).style('color: grey')
+
 
 def main():
     ui.run(title="AQS Webserver", favicon = '☁️', host="0.0.0.0", port=8080, reload=False)

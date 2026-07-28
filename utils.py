@@ -1,5 +1,6 @@
 import datetime
 import csv
+import threading
 from typing import Any
 from contextlib import suppress
 
@@ -120,10 +121,13 @@ def aggregate_time(time_list, n=500):
 
 
 ###### Logging helpers ######
+_log_lock = threading.Lock()
+
 def log_data(data):
-    with open('data_log.csv', mode='a', newline='') as data_log:
-        writer = csv.writer(data_log)
-        writer.writerow(data)
+    with _log_lock:
+        with open('data_log.csv', mode='a', newline='') as data_log:
+            writer = csv.writer(data_log)
+            writer.writerow(data)
 
 def load_data():
     dts,temps,humiditys,dew_points,co2s,voc_raws,voc_indexs,nox_raws,nox_indexs,pm100s,pm25s,pm10s = [], [], [], [], [], [], [], [], [], [], [], []
