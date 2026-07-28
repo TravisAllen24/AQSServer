@@ -128,25 +128,3 @@ def log_data(data):
         with open('data_log.csv', mode='a', newline='') as data_log:
             writer = csv.writer(data_log)
             writer.writerow(data)
-
-def load_data():
-    dts,temps,humiditys,dew_points,co2s,voc_raws,voc_indexs,nox_raws,nox_indexs,pm100s,pm25s,pm10s = [], [], [], [], [], [], [], [], [], [], [], []
-    with open('data_log.csv', newline='') as f:
-        reader = csv.reader(f)
-        next(reader)
-        for row in reader:
-            dt,temp,humidity,dew_point,co2,voc_raw,voc_index,nox_raw,nox_index,pm100,pm25,pm10=row
-            dts.append(format_value(dt))
-            temps.append(format_value(temp, 2))
-            humiditys.append(format_value(humidity, 2))
-            dew_points.append(format_value(dew_point, 2))
-            co2s.append(format_value(co2))
-            voc_raws.append(format_value(voc_raw))
-            voc_indexs.append(format_value(voc_index))
-            nox_raws.append(format_value(nox_raw))
-            nox_indexs.append(format_value(nox_index))
-            pm100s.append(format_value(pm100))
-            pm25s.append(format_value(pm25))
-            pm10s.append(format_value(pm10))
-
-    return dts,temps,humiditys,dew_points,co2s,voc_raws,voc_indexs,nox_raws,nox_indexs,pm100s,pm25s,pm10s

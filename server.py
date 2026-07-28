@@ -1,8 +1,7 @@
-import csv
-
-from nicegui import ui
+from nicegui import ui, app
 from event_logger import get_logger
-from utils import get_y_label, aggregate_data_max, aggregate_data_avg, aggregate_time, load_data, format_value, get_relevant_data
+from aqs_data import AQSData
+from utils import get_y_label, aggregate_data_max, aggregate_data_avg, aggregate_time, get_relevant_data
 
 logger = get_logger("AQSWebServer", "webserver.log")
 
@@ -12,32 +11,7 @@ def log_error(exception: Exception):
 
 app.on_exception(log_error)
 
-dts, temps, humiditys, dew_points, co2s, voc_raws, voc_indexs, nox_raws, nox_indexs, pm100s, pm25s, pm10s = load_data()
-
-def sync_missing_data():
-    """Append any rows from the CSV newer than the last cached entry."""
-    if not dts:
-        return
-    last_dt = dts[-1]
-    with open('data_log.csv', newline='') as f:
-        reader = csv.reader(f)
-        next(reader)  # skip header
-        for row in reader:
-            dt = row[0]
-            if dt > last_dt:
-                dts.append(dt)
-                temps.append(format_value(row[1], 2))
-                humiditys.append(format_value(row[2], 2))
-                dew_points.append(format_value(row[3], 2))
-                co2s.append(format_value(row[4]))
-                voc_raws.append(format_value(row[5]))
-                voc_indexs.append(format_value(row[6]))
-                nox_raws.append(format_value(row[7]))
-                nox_indexs.append(format_value(row[8]))
-                pm100s.append(format_value(row[9]))
-                pm25s.append(format_value(row[10]))
-                pm10s.append(format_value(row[11]))
-
+aqs = AQSData()
 
 @ui.refreshable
 def plotter(timespan="Hour", data_type="T", is_dark=False):
@@ -55,9 +29,9 @@ def plotter(timespan="Hour", data_type="T", is_dark=False):
 
     if data_type == 'PM':
 
-        t1, y1 = get_relevant_data(pm10s, timespan, dts)
-        _, y2 = get_relevant_data(pm25s, timespan, dts)
-        _, y3 = get_relevant_data(pm100s, timespan, dts)
+        t1, y1 = get_relevant_data(aqs.pm10s, timespan, aqs.dts)
+        _, y2 = get_relevant_data(aqs.pm25s, timespan, aqs.dts)
+        _, y3 = get_relevant_data(aqs.pm100s, timespan, aqs.dts)
 
         agg_t1 = aggregate_time(t1, n=120)
         agg_y1 = aggregate_data_max(y1)
@@ -99,15 +73,15 @@ def plotter(timespan="Hour", data_type="T", is_dark=False):
     else:
 
         ys = {
-            'T': temps,
-            'RH': humiditys,
-            'DP': dew_points,
-            'CO2': co2s,
-            'VOC': voc_indexs,
-            'NOX': nox_indexs
-        }.get(data_type, temps)
+            'T': aqs.temps,
+            'RH': aqs.humiditys,
+            'DP': aqs.dew_points,
+            'CO2': aqs.co2s,
+            'VOC': aqs.voc_indexs,
+            'NOX': aqs.nox_indexs
+        }.get(data_type, aqs.temps)
 
-        t, y = get_relevant_data(ys, timespan, dts)
+        t, y = get_relevant_data(ys, timespan, aqs.dts)
         agg_t = aggregate_time(t)
         agg_y = aggregate_data_avg(y)
 
@@ -154,7 +128,7 @@ def plotter(timespan="Hour", data_type="T", is_dark=False):
 @ui.page('/')
 def index_page():
     """Define the main page of the web application."""
-    sync_missing_data()
+    aqs.sync()
 
     with ui.row().classes('w-full justify-center'):
         ui.label('AQS Dashboard').style('font-size: 300%; font-weight: 400')
@@ -197,18 +171,18 @@ def index_page():
                         pm10_label = ui.label('-').style('font-size: 125%')
 
                     def update_labels():
-                        sync_missing_data()
-                        if dts:
-                            time_label.set_text(dts[-1])
-                            temp_label.set_text(f'{temps[-1]} C')
-                            rh_label.set_text(f'{humiditys[-1]}%')
-                            dp_label.set_text(f'{dew_points[-1]} C')
-                            co2_label.set_text(f'{co2s[-1]} ppm')
-                            voc_index_label.set_text(f'{voc_indexs[-1]} / 500')
-                            nox_index_label.set_text(f'{nox_indexs[-1]} / 500')
-                            pm100_label.set_text(f'{pm100s[-1]} μg/m³')
-                            pm25_label.set_text(f'{pm25s[-1]} μg/m³')
-                            pm10_label.set_text(f'{pm10s[-1]} μg/m³')
+                        aqs.sync()
+                        if aqs.dts:
+                            time_label.set_text(aqs.dts[-1])
+                            temp_label.set_text(f'{aqs.temps[-1]} C')
+                            rh_label.set_text(f'{aqs.humiditys[-1]}%')
+                            dp_label.set_text(f'{aqs.dew_points[-1]} C')
+                            co2_label.set_text(f'{aqs.co2s[-1]} ppm')
+                            voc_index_label.set_text(f'{aqs.voc_indexs[-1]} / 500')
+                            nox_index_label.set_text(f'{aqs.nox_indexs[-1]} / 500')
+                            pm100_label.set_text(f'{aqs.pm100s[-1]} μg/m³')
+                            pm25_label.set_text(f'{aqs.pm25s[-1]} μg/m³')
+                            pm10_label.set_text(f'{aqs.pm10s[-1]} μg/m³')
 
                     ui.timer(30, update_labels)
 
