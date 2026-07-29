@@ -38,12 +38,17 @@ def get_relevant_data(data_list, time_duration, dts):
 
 
 def clean_data(data):
-    data = data.replace('\n', '').replace('\r', '').split(',')
+    return data.replace('\n', '').replace('\r', '')
+
+
+def validate_data(data):
+    data = data.split(',')
 
     if len(data) != 13 or data[0] != "$AQS":
         return None
 
     return data[1:]
+
 
 ###### Time helpers ######
 def convert_time(time):

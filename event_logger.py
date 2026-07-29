@@ -1,6 +1,15 @@
 import logging
+import os
 
-def get_logger(name, log_file, level=logging.DEBUG):
+# 1. Define the directory and log file name
+
+def get_logger(name, file_name, level=logging.DEBUG):
+    log_dir = "logs"
+    log_file = os.path.join(log_dir, file_name)
+
+    # 2. Automatically create the folder if it does not exist
+    os.makedirs(log_dir, exist_ok=True)
+
     logger = logging.getLogger(name)
     logger.setLevel(level)
     fh = logging.FileHandler(log_file)
