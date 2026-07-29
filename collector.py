@@ -9,7 +9,7 @@ from event_logger import get_logger
 
 
 class SerialCollector:
-    def __init__(self, com_port="COM4", baudrate=115200, polling_interval=30):
+    def __init__(self, com_port="COM4", baudrate=115200, polling_interval=5):
         self.com_port = com_port
         self.baudrate = baudrate
         self.polling_interval = polling_interval
