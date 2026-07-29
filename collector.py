@@ -32,13 +32,15 @@ class SerialCollector:
                         sleep(self.polling_interval)
 
                         try:
-                            raw_data = ser.readline().decode('ascii', errors='replace')
-                            cleaned_data = clean_data(raw_data)
+                            decoded_data = ser.readline().decode('ascii', errors='replace')
+                            self.logger.debug(f"Data received from serial port {self.com_port}: {decoded_data}")
+
+                            cleaned_data = clean_data(decoded_data)
                             if not cleaned_data:
                                 continue
 
                             log_data(cleaned_data)
-                            self.logger.debug(f"Data received from serial port {self.com_port}: {cleaned_data}")
+                            self.logger.info(f"Data logged from serial port {self.com_port}: {cleaned_data}")
 
                         except Exception as e:
                             self.logger.exception(f"Error while reading from serial port {self.com_port}")
@@ -98,12 +100,14 @@ class TCPCollector:
 
                 try:
                     decoded_data = data.decode('ascii', errors='replace')
+                    self.logger.debug(f"Data received from client {client_address}: {decoded_data}")
+
                     cleaned_data = clean_data(decoded_data)
                     if not cleaned_data:
                         continue
 
                     log_data(cleaned_data)
-                    self.logger.debug(f"Data received from client {client_address}: {cleaned_data}")
+                    self.logger.info(f"Data logged from client {client_address}: {cleaned_data}")
 
                 except Exception:
                     self.logger.exception(f"Error while processing data from client {client_address}")
