@@ -211,6 +211,7 @@ def index_page():
 
 
 def main():
+    logger.info("Starting AQS Webserver...")
     ui.run(title="AQS Webserver", favicon = '☁️', host="0.0.0.0", port=8080, reload=False)
 
 
