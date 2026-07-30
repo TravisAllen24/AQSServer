@@ -8,7 +8,7 @@ from event_logger import get_logger
 
 
 class SerialCollector:
-    """Reads lines from a local USB serial port. Reconnects on failure."""
+    """Reads lines from a local USB serial port."""
 
     def __init__(self, com_port="/dev/aqs-sensor", baudrate=115200):
         self.com_port = com_port
@@ -40,7 +40,8 @@ class SerialCollector:
             if not raw:
                 self.logger.error("No data (timeout or port lost)")
             return raw
-
+        raise serial.SerialException("Not connected to sensor")
+    
     def close(self):
         if self._ser:
             self._ser.close()
@@ -49,7 +50,7 @@ class SerialCollector:
 
 class TCPCollector:
     """Connects out to a TCP data source (e.g. an ESP32 acting as a server)
-    as a client and reads lines. Reconnects on failure."""
+    as a client and reads lines."""
 
     def __init__(self, host="192.168.1.194", port=65432):
         self.host = host
@@ -81,8 +82,9 @@ class TCPCollector:
         if self._file:
             raw = self._file.readline()
             if not raw:
-                self.logger.error("Sensor disconnected")
+                raise ConnectionError("Sensor disconnected")
             return raw
+        raise ConnectionError("Not connected to sensor")
 
     def close(self):
         if self._sock:
@@ -91,8 +93,7 @@ class TCPCollector:
 
 
 class DataCollector:
-    """Reads lines from a local sensor source (serial or TCP) and forwards
-    each line to a remote log server over TCP, while also logging locally."""
+    """Collects data from either a local USB serial port or a TCP source."""
 
     def __init__(self, com_port="/dev/aqs-sensor", baudrate=115200,
                  tcp_host="127.0.0.1", tcp_port=5000):
@@ -146,8 +147,8 @@ class DataCollector:
 if __name__ == "__main__":
     # USB serial mode:
     data_collector = DataCollector(
-        com_port="COM14", baudrate=115200,
-        tcp_host="127.0.0.1", tcp_port=5000
+        com_port="/dev/aqs-sensor", baudrate=115200,
+        tcp_host="192.168.1.194", tcp_port=65432
     )
 
     data_collector.run()
