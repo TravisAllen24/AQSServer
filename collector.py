@@ -1,3 +1,4 @@
+import os
 import socket
 import time
 
@@ -10,9 +11,10 @@ from event_logger import get_logger
 class SerialCollector:
     """Reads lines from a local USB serial port."""
 
-    def __init__(self, com_port="/dev/aqs-sensor", baudrate=115200):
+    def __init__(self, com_port="/dev/aqs-sensor", baudrate=115200, timeout=60):
         self.com_port = com_port
         self.baudrate = baudrate
+        self.timeout = timeout
         self.logger = get_logger("SerialCollector", "serial_collector.log")
         self._ser = None
         self.connected = False
@@ -21,7 +23,7 @@ class SerialCollector:
         warned = 0
         while True:
             try:
-                self._ser = serial.Serial(self.com_port, self.baudrate, timeout=1)
+                self._ser = serial.Serial(self.com_port, self.baudrate, timeout=self.timeout)
                 self.logger.info(f"Connected to serial port {self.com_port}")
                 self.connected = True
                 return True
@@ -41,7 +43,7 @@ class SerialCollector:
                 self.logger.error("No data (timeout or port lost)")
             return raw
         raise serial.SerialException("Not connected to sensor")
-    
+
     def close(self):
         if self._ser:
             self._ser.close()
@@ -52,9 +54,10 @@ class TCPCollector:
     """Connects out to a TCP data source (e.g. an ESP32 acting as a server)
     as a client and reads lines."""
 
-    def __init__(self, host="192.168.1.194", port=65432):
+    def __init__(self, host="192.168.1.194", port=65432, timeout=60):
         self.host = host
         self.port = port
+        self.timeout = timeout
         self.logger = get_logger("TCPCollector", "tcp_collector.log")
         self._sock = None
         self._file = None
@@ -64,8 +67,8 @@ class TCPCollector:
         warned = 0
         while True:
             try:
-                self._sock = socket.create_connection((self.host, self.port), timeout=5)
-                self._sock.settimeout(5)
+                self._sock = socket.create_connection((self.host, self.port), timeout=self.timeout)
+                self._sock.settimeout(self.timeout)
                 self._file = self._sock.makefile("rb")
                 self.logger.info(f"Connected to sensor at {self.host}:{self.port}")
                 self.connected = True
@@ -96,25 +99,50 @@ class DataCollector:
     """Collects data from either a local USB serial port or a TCP source."""
 
     def __init__(self, com_port="/dev/aqs-sensor", baudrate=115200,
-                 tcp_host="127.0.0.1", tcp_port=5000):
+                 tcp_host="127.0.0.1", tcp_port=5000, timeout=60):
         self.logger = get_logger("DataCollector", "data_collector.log")
 
-        self.source = SerialCollector(com_port=com_port, baudrate=baudrate)
-        self.mode = "serial"
+        self.tcp_host = tcp_host
+        self.tcp_port = tcp_port
+        self.com_port = com_port
+        self.baudrate = baudrate
+        self.timeout = timeout
+        self.mode = None
 
-        if not self.source.connect():
-            self.source = TCPCollector(tcp_host, tcp_port)
-            self.source.connect()
-            self.mode = "tcp"
+        self.connect()
+
+
+    def serial_connect(self):
+        self.source = SerialCollector(com_port=self.com_port, baudrate=self.baudrate, timeout=self.timeout)
+        self.mode = "serial"
+        self.logger.info(f"Switched to serial port {self.com_port} for data collection")
+        self.source.connect()
+
+
+    def tcp_connect(self):
+        self.source = TCPCollector(host=self.tcp_host, port=self.tcp_port, timeout=self.timeout)
+        self.mode = "tcp"
+        self.logger.info(f"Switched to TCP {self.tcp_host}:{self.tcp_port} for data collection")
+        self.source.connect()
+
+
+    def connect(self):
+        if os.path.exists(self.com_port):
+            self.serial_connect()
+        else:
+            self.tcp_connect()
+
 
     def run(self):
         self.logger.info(f"Data collection starting ({self.mode})")
 
         while True:
             if not self.source.connected:
-                self.source.connect()
+                self.connect()
             try:
                 while True:
+                    if os.path.exists(self.com_port):
+                        self.serial_connect()
                     try:
                         raw = self.source.read_line()
                     except Exception:
@@ -133,6 +161,7 @@ class DataCollector:
                         log_data(validated_data)
                         self.logger.debug(f"Data logged ({self.mode}): {validated_data}")
 
+
                     except Exception:
                         self.logger.exception(f"Error processing data from source ({self.mode})")
                         log_data(['-'] * 12)
@@ -148,7 +177,8 @@ if __name__ == "__main__":
     # USB serial mode:
     data_collector = DataCollector(
         com_port="/dev/aqs-sensor", baudrate=115200,
-        tcp_host="192.168.1.194", tcp_port=65432
+        tcp_host="192.168.1.194", tcp_port=65432,
+        timeout=60
     )
 
     data_collector.run()
