@@ -72,7 +72,7 @@ def delta_time(time_duration):
 ###### Plotting helpers ######
 def get_y_label(data_type, temp_unit="C"):
     """Return the appropriate y-axis label based on the data type."""
-    y_labels = {"T": f'Temperature ({temp_unit})',
+    y_labels = {"T": f'Temperature (°{temp_unit})',
                 "RH": "Relative Humidity (%)",
                 "CO2": "CO2 (ppm)",
                 "VOC": "VOC Index",
@@ -83,7 +83,7 @@ def get_y_label(data_type, temp_unit="C"):
     return y_labels.get(data_type, y_labels["T"])
 
 
-def aggregate_data_avg(data, n=500):
+def aggregate_data_avg(data, n=500) -> list[float|None]:
     if len(data) <= n:
         return data
     n = len(data) // n
@@ -93,7 +93,7 @@ def aggregate_data_avg(data, n=500):
     ]
 
 
-def aggregate_data_max(data_list, n=120):
+def aggregate_data_max(data_list, n=120) -> list[float|None]:
     """Aggregate a list of data into n data points based on the specified time duration to reduce computation."""
     if len(data_list) <= n:
         return data_list
@@ -188,6 +188,7 @@ def calculate_wet_bulb(temp_c: float|None, rh: float|None) -> float|None:
             + 0.00391838 * rh ** 1.5 * math.atan(0.023101 * rh)
             - 4.686035)
 
+
 def c_to_f(celsius: float|None) -> float|None:
     """Convert Celsius to Fahrenheit."""
     if celsius is None:
@@ -195,10 +196,20 @@ def c_to_f(celsius: float|None) -> float|None:
     return (celsius * 9/5) + 32
 
 
-def ensure_units(temp, unit):
+def ensure_units(temp: int|float|None, unit: str) -> float|None:
     """Ensure the temperature is in the specified unit ('C' or 'F')."""
     if temp is None:
         return None
     if unit == 'F':
         return c_to_f(temp)
     return temp
+
+def ensure_units_list(temp_list: list[float|None], data_type: str, unit: str) -> list[float|None]:
+    """Ensure a list of temperatures is in the specified unit ('C' or 'F').
+    Only applies to temperature data types ('T', 'DP', 'WB', 'HI').
+    """
+    temperature_datas = ['T', 'DP', 'WB', 'HI']
+
+    if data_type in temperature_datas and unit == 'F':
+        return [c_to_f(v) for v in temp_list]
+    return temp_list

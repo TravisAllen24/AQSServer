@@ -66,73 +66,73 @@ class AQSData:
                     self.pm10s.append(format_value(row[11]))
 
     @property
-    def dt(self):
+    def dt(self) -> str|None:
         if self.dts:
             return self.dts[-1]
         return None
     
     @property
-    def temp(self):
+    def temp(self) -> float|None:
         if self.temps:
             return self.temps[-1]
         return None
     
     @property
-    def rh(self):
+    def rh(self) -> float|None:
         if self.humiditys:
             return self.humiditys[-1]
         return None
     
     @property
-    def co2(self):
+    def co2(self) -> int|None:
         if self.co2s:
             return self.co2s[-1]
         return None
     
     @property
-    def voc_index(self):
+    def voc_index(self) -> int|None:
         if self.voc_indexs:
             return self.voc_indexs[-1]
         return None
     
     @property
-    def nox_index(self):
+    def nox_index(self) -> int|None:
         if self.nox_indexs:
             return self.nox_indexs[-1]
         return None
     
     @property
-    def pm100(self):
+    def pm100(self) -> int|None:
         if self.pm100s:
             return self.pm100s[-1]
         return None
     
     @property
-    def pm25(self):
+    def pm25(self) -> int|None:
         if self.pm25s:
             return self.pm25s[-1]
         return None
     
     @property
-    def pm10(self):
+    def pm10(self) -> int|None:
         if self.pm10s:
             return self.pm10s[-1]
         return None
         
     @property
-    def dp(self):
+    def dp(self) -> float|None:
         if self.temps and self.humiditys:
-            return format_value(calculate_dew_point(self.temp, self.rh), 2)
+            return calculate_dew_point(self.temp, self.rh)
         return None
     @property
-    def wetbulb(self):
+    def wetbulb(self) -> float|None:
         if self.temps and self.humiditys:
-            return format_value(calculate_wet_bulb(self.temp, self.rh), 2)
+            return calculate_wet_bulb(self.temp, self.rh)
         return None
 
     @property
-    def heat_index(self):
+    def heat_index(self) -> float|None:
         if self.temps and self.humiditys:
-            return format_value(calculate_heat_index(self.temp, self.rh), 2)
+            return calculate_heat_index(self.temp, self.rh)
         return None
     

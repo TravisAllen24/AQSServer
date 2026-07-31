@@ -1,7 +1,7 @@
 from nicegui import ui, app
 from event_logger import get_logger
 from aqs_data import AQSData
-from utils import (c_to_f, get_y_label, aggregate_data_max, aggregate_data_avg, 
+from utils import (ensure_units_list, get_y_label, aggregate_data_max, aggregate_data_avg, 
                    aggregate_time, get_relevant_data, ensure_units, format_value)
 
 logger = get_logger("AQSWebServer", "webserver.log")
@@ -81,10 +81,7 @@ def plotter(timespan="Hour", data_type="T", temp_unit="C", is_dark=False):
         t, y = get_relevant_data(ys, timespan, aqs.dts)
         agg_t = aggregate_time(t)
         agg_y = aggregate_data_avg(y)
-
-        if data_type == 'T' and temp_unit == 'F':
-            agg_y = [c_to_f(v) for v in agg_y]
-
+        agg_y = ensure_units_list(agg_y, data_type, temp_unit)
 
         data = [
                     {
@@ -101,7 +98,7 @@ def plotter(timespan="Hour", data_type="T", temp_unit="C", is_dark=False):
             'data': data,
             'layout': {
                 'title': {
-                    'text': get_y_label(data_type) + f' over Time ({"Max" if timespan == "Max" else f"1 {timespan}"})',
+                    'text': get_y_label(data_type, temp_unit) + f' over Time ({"Max" if timespan == "Max" else f"1 {timespan}"})',
                     'font': {'color': text_color}
                 },
                 'xaxis': {
@@ -112,7 +109,7 @@ def plotter(timespan="Hour", data_type="T", temp_unit="C", is_dark=False):
                     'zerolinecolor': grid_color,
                 },
                 'yaxis': {
-                    'title': {"text": get_y_label(data_type),
+                    'title': {"text": get_y_label(data_type, temp_unit),
                               'font': {'color': text_color}},
                     'gridcolor': grid_color,
                     'tickfont': {'color': text_color},
@@ -125,24 +122,25 @@ def plotter(timespan="Hour", data_type="T", temp_unit="C", is_dark=False):
 
     ui.plotly(fig_config).classes('w-full h-full')
 
+
 @ui.page('/')
 def index_page():
     """Define the main page of the web application."""
     aqs.sync()
 
     FIELDS = [
-        ('Datetime:',        lambda: aqs.dt,                     None,                    '{}'),
-        ('Temperature: ',    lambda: format_value(ensure_units(aqs.temp, toggle_unit.value), 2), lambda: toggle_unit.value,          '{} °{}'),
-        ('Relative Humidity: ', lambda: aqs.rh,                     None,                    '{}%'),
-        ('Dew Point: ',      lambda: format_value(ensure_units(aqs.dp, toggle_unit.value), 2), lambda: toggle_unit.value,         '{} °{}'),
-        ('Wet Bulb: ',       lambda: format_value(ensure_units(aqs.wetbulb, toggle_unit.value), 2), lambda: toggle_unit.value,    '{} °{}'),
-        ('Heat Index: ',     lambda: format_value(ensure_units(aqs.heat_index, toggle_unit.value), 2), lambda: toggle_unit.value,  '{} °{}'),
-        ('CO2: ',            lambda: aqs.co2,    None,                    '{} ppm'),
-        ('VOC Index: ',      lambda: aqs.voc_index,   None,                    '{} / 500'),
-        ('NOx Index: ',      lambda: aqs.nox_index,   None,                    '{} / 500'),
-        ('PM 10: ',          lambda: aqs.pm100,       None,                    '{} μg/m³'),
-        ('PM 2.5: ',         lambda: aqs.pm25,        None,                    '{} μg/m³'),
-        ('PM 1.0: ',         lambda: aqs.pm10,        None,                    '{} μg/m³'),
+        ('Datetime:',           lambda: aqs.dt,                                                            None,                       '{}'),
+        ('Temperature: ',       lambda: format_value(ensure_units(aqs.temp, toggle_unit.value), 2),        lambda: toggle_unit.value,  '{} °{}'),
+        ('Relative Humidity: ', lambda: aqs.rh,                                                            None,                       '{}%'),
+        ('Dew Point: ',         lambda: format_value(ensure_units(aqs.dp, toggle_unit.value), 2),          lambda: toggle_unit.value,  '{} °{}'),
+        ('Wet Bulb: ',          lambda: format_value(ensure_units(aqs.wetbulb, toggle_unit.value), 2),     lambda: toggle_unit.value,  '{} °{}'),
+        ('Heat Index: ',        lambda: format_value(ensure_units(aqs.heat_index, toggle_unit.value), 2),  lambda: toggle_unit.value,  '{} °{}'),
+        ('CO2: ',               lambda: aqs.co2,                                                           None,                       '{} ppm'),
+        ('VOC Index: ',         lambda: aqs.voc_index,                                                     None,                       '{} / 500'),
+        ('NOx Index: ',         lambda: aqs.nox_index,                                                     None,                       '{} / 500'),
+        ('PM 10: ',             lambda: aqs.pm100,                                                         None,                       '{} μg/m³'),
+        ('PM 2.5: ',            lambda: aqs.pm25,                                                          None,                       '{} μg/m³'),
+        ('PM 1.0: ',            lambda: aqs.pm10,                                                          None,                       '{} μg/m³'),
     ]
 
     STYLE_SECTION_HEADER = 'font-size: 125%; font-weight: 500'
