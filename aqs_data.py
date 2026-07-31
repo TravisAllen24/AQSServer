@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 import csv
 
-from utils import format_value
-
+from utils import (format_value, calculate_heat_index, 
+                    calculate_dew_point, calculate_wet_bulb)
 @dataclass
 class AQSData:
     dts: list = field(default_factory=list)
@@ -16,11 +16,12 @@ class AQSData:
     pm100s: list = field(default_factory=list)
     pm25s: list = field(default_factory=list)
     pm10s: list = field(default_factory=list)
-
+    dps: list = field(default_factory=list)
+    wetbulbs: list = field(default_factory=list)
+    heat_indexes: list = field(default_factory=list)
 
     def __post_init__(self):
         self.load_data()
-
 
     def load_data(self):
         with open('data_log.csv', newline='') as f:
@@ -40,12 +41,12 @@ class AQSData:
                 self.pm25s.append(format_value(pm25))
                 self.pm10s.append(format_value(pm10))
 
-
     def sync(self):
         """Append any rows from the CSV newer than the last cached entry."""
-        if not self.dts:
+        last_dt = self.dt
+        if last_dt is None:
             return
-        last_dt = self.dts[-1]
+        
         with open('data_log.csv', newline='') as f:
             reader = csv.reader(f)
             next(reader)  # skip header
@@ -63,3 +64,75 @@ class AQSData:
                     self.pm100s.append(format_value(row[9]))
                     self.pm25s.append(format_value(row[10]))
                     self.pm10s.append(format_value(row[11]))
+
+    @property
+    def dt(self):
+        if self.dts:
+            return self.dts[-1]
+        return None
+    
+    @property
+    def temp(self):
+        if self.temps:
+            return self.temps[-1]
+        return None
+    
+    @property
+    def rh(self):
+        if self.humiditys:
+            return self.humiditys[-1]
+        return None
+    
+    @property
+    def co2(self):
+        if self.co2s:
+            return self.co2s[-1]
+        return None
+    
+    @property
+    def voc_index(self):
+        if self.voc_indexs:
+            return self.voc_indexs[-1]
+        return None
+    
+    @property
+    def nox_index(self):
+        if self.nox_indexs:
+            return self.nox_indexs[-1]
+        return None
+    
+    @property
+    def pm100(self):
+        if self.pm100s:
+            return self.pm100s[-1]
+        return None
+    
+    @property
+    def pm25(self):
+        if self.pm25s:
+            return self.pm25s[-1]
+        return None
+    
+    @property
+    def pm10(self):
+        if self.pm10s:
+            return self.pm10s[-1]
+        return None
+        
+    @property
+    def dp(self):
+        if self.temps and self.humiditys:
+            return format_value(calculate_dew_point(self.temp, self.rh), 2)
+        return None
+    @property
+    def wetbulb(self):
+        if self.temps and self.humiditys:
+            return format_value(calculate_wet_bulb(self.temp, self.rh), 2)
+        return None
+
+    @property
+    def heat_index(self):
+        if self.temps and self.humiditys:
+            return format_value(calculate_heat_index(self.temp, self.rh), 2)
+        return None
+    

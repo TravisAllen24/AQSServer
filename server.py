@@ -127,15 +127,18 @@ def index_page():
     aqs.sync()
 
     FIELDS = [
-        ('Datetime:',        lambda: aqs.dts[-1],          '{}'),
-        ('Temperature: ',    lambda: aqs.temps[-1],        '{} C'),
-        ('Relative Humidity: ', lambda: aqs.humiditys[-1], '{}%'),
-        ('CO2: ',            lambda: aqs.co2s[-1],         '{} ppm'),
-        ('VOC Index: ',      lambda: aqs.voc_indexs[-1],   '{} / 500'),
-        ('NOx Index: ',      lambda: aqs.nox_indexs[-1],   '{} / 500'),
-        ('PM 10: ',          lambda: aqs.pm100s[-1],       '{} μg/m³'),
-        ('PM 2.5: ',         lambda: aqs.pm25s[-1],        '{} μg/m³'),
-        ('PM 1.0: ',         lambda: aqs.pm10s[-1],        '{} μg/m³'),
+        ('Datetime:',        lambda: aqs.dt,          '{}'),
+        ('Temperature: ',    lambda: aqs.temp,        '{} C'),
+        ('Relative Humidity: ', lambda: aqs.rh,       '{}%'),
+        ('Dew Point: ',      lambda: aqs.dp,          '{} C'),
+        ('Wet Bulb: ',       lambda: aqs.wetbulb,     '{} C'),
+        ('Heat Index: ',     lambda: aqs.heat_index,  '{} C'),
+        ('CO2: ',            lambda: aqs.co2,         '{} ppm'),
+        ('VOC Index: ',      lambda: aqs.voc_index,   '{} / 500'),
+        ('NOx Index: ',      lambda: aqs.nox_index,   '{} / 500'),
+        ('PM 10: ',          lambda: aqs.pm100,       '{} μg/m³'),
+        ('PM 2.5: ',         lambda: aqs.pm25,        '{} μg/m³'),
+        ('PM 1.0: ',         lambda: aqs.pm10,        '{} μg/m³'),
     ]
 
     STYLE_SECTION_HEADER = 'font-size: 125%; font-weight: 500'

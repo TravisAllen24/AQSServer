@@ -1,5 +1,6 @@
 import datetime
 import csv
+import math
 import threading
 from typing import Any
 from contextlib import suppress
@@ -73,6 +74,9 @@ def get_y_label(data_type):
     """Return the appropriate y-axis label based on the data type."""
     y_labels = {"T": 'Temperature (C)',
                 "RH": "Relative Humidity (%)",
+                "DP": "Dew Point (C)",
+                "WB": "Wet Bulb (C)",
+                "HI": "Heat Index (C)",
                 "CO2": "CO2 (ppm)",
                 "VOC": "VOC Index",
                 "NOX": "NOX Index",
@@ -132,3 +136,57 @@ def log_data(data):
         with open('data_log.csv', mode='a', newline='') as data_log:
             writer = csv.writer(data_log)
             writer.writerow(data)
+
+
+###### 
+def calculate_heat_index(t, rh):
+    """Calculate the heat index given temperature (T) in Fahrenheit 
+    and relative humidity (RH) in percent."""
+    if t is None or rh is None:
+        return None
+
+    hi = 0.5 * (t + 61.0 + ((t-68.0)*1.2) + (rh*0.094))
+
+    if hi > 80:
+            hi = (-42.379 + 2.04901523*t + 10.14333127*rh - .22475541*t*rh 
+            - .00683783*t*t - .05481717*rh*rh + .00122874*t*t*rh 
+            + .00085282*t*rh*rh - .00000199*t*t*rh*rh)
+
+    if rh < 13 and 80 <= t <= 112:
+         hi -= ((13 - rh) / 4) * math.sqrt((17 - abs(t - 95.)) / 17)
+
+    elif rh > 85 and 80 <= t <= 87:
+        hi += ((rh-85)/10) * ((87-t)/5)
+
+    return hi
+
+
+# Dew point calculation function
+def calculate_dew_point(temp_c: float|None, rh: float|None) -> float|None:
+    """
+    Calculate the dew point temperature (°C) given temperature (°C) and relative humidity (%).
+    Uses the Magnus formula, suitable for typical indoor conditions.
+    Returns None if inputs are invalid.
+    """
+    if temp_c is None or rh is None:
+        return None
+    # Magnus formula constants for water vapor over water
+    a = 17.62
+    b = 243.12  # °C
+    try:
+        alpha = ((a * temp_c) / (b + temp_c)) + (math.log(rh / 100.0))
+        dew_point = (b * alpha) / (a - alpha)
+        return round(dew_point, 2)
+    except Exception:
+        return None
+
+
+def calculate_wet_bulb(temp_c: float|None, rh: float|None) -> float|None:
+    """Stull (2011) empirical approximation, accurate to ~1°C for -20 to 50°C, 5-99% RH."""
+    if temp_c is None or rh is None:
+        return None
+    return (temp_c * math.atan(0.151977 * (rh + 8.313659) ** 0.5)
+            + math.atan(temp_c + rh)
+            - math.atan(rh - 1.676331)
+            + 0.00391838 * rh ** 1.5 * math.atan(0.023101 * rh)
+            - 4.686035)
