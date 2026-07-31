@@ -44,7 +44,7 @@ def clean_data(data):
 def validate_data(data):
     data = data.split(',')
 
-    if len(data) != 13 or data[0] != "$AQS":
+    if len(data) != 12 or data[0] != "$AQS":
         return None
 
     return data[1:]
@@ -73,7 +73,6 @@ def get_y_label(data_type):
     """Return the appropriate y-axis label based on the data type."""
     y_labels = {"T": 'Temperature (C)',
                 "RH": "Relative Humidity (%)",
-                "DP": "Dew Point (C)",
                 "CO2": "CO2 (ppm)",
                 "VOC": "VOC Index",
                 "NOX": "NOX Index",

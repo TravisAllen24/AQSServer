@@ -72,7 +72,6 @@ def plotter(timespan="Hour", data_type="T", is_dark=False):
         ys = {
             'T': aqs.temps,
             'RH': aqs.humiditys,
-            'DP': aqs.dew_points,
             'CO2': aqs.co2s,
             'VOC': aqs.voc_indexs,
             'NOX': aqs.nox_indexs
@@ -131,7 +130,6 @@ def index_page():
         ('Datetime:',        lambda: aqs.dts[-1],          '{}'),
         ('Temperature: ',    lambda: aqs.temps[-1],        '{} C'),
         ('Relative Humidity: ', lambda: aqs.humiditys[-1], '{}%'),
-        ('Dew Point: ',      lambda: aqs.dew_points[-1],   '{} C'),
         ('CO2: ',            lambda: aqs.co2s[-1],         '{} ppm'),
         ('VOC Index: ',      lambda: aqs.voc_indexs[-1],   '{} / 500'),
         ('NOx Index: ',      lambda: aqs.nox_indexs[-1],   '{} / 500'),
@@ -195,7 +193,7 @@ def index_page():
                         with ui.column():
                             with ui.row().classes(CLASS_CENTERED_ROW):
                                 ui.label('Data type').style(STYLE_SUBHEADER)
-                            toggle_2 = ui.toggle(['T', 'RH', "DP", "CO2", "VOC", "NOX", "PM"],
+                            toggle_2 = ui.toggle(['T', 'RH', "CO2", "VOC", "NOX", "PM"],
                                            value='T', on_change=refresh_plot)
                         with ui.column():
                             ui.button(icon='refresh', on_click=refresh_plot

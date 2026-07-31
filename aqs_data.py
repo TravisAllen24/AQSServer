@@ -8,7 +8,6 @@ class AQSData:
     dts: list = field(default_factory=list)
     temps: list = field(default_factory=list)
     humiditys: list = field(default_factory=list)
-    dew_points: list = field(default_factory=list)
     co2s: list = field(default_factory=list)
     voc_raws: list = field(default_factory=list)
     voc_indexs: list = field(default_factory=list)
@@ -28,11 +27,10 @@ class AQSData:
             reader = csv.reader(f)
             next(reader)
             for row in reader:
-                dt,temp,humidity,dew_point,co2,voc_raw,voc_index,nox_raw,nox_index,pm100,pm25,pm10=row
+                dt,temp,humidity,co2,voc_raw,voc_index,nox_raw,nox_index,pm100,pm25,pm10=row
                 self.dts.append(format_value(dt))
                 self.temps.append(format_value(temp, 2))
                 self.humiditys.append(format_value(humidity, 2))
-                self.dew_points.append(format_value(dew_point, 2))
                 self.co2s.append(format_value(co2))
                 self.voc_raws.append(format_value(voc_raw))
                 self.voc_indexs.append(format_value(voc_index))
@@ -57,7 +55,6 @@ class AQSData:
                     self.dts.append(dt)
                     self.temps.append(format_value(row[1], 2))
                     self.humiditys.append(format_value(row[2], 2))
-                    self.dew_points.append(format_value(row[3], 2))
                     self.co2s.append(format_value(row[4]))
                     self.voc_raws.append(format_value(row[5]))
                     self.voc_indexs.append(format_value(row[6]))
