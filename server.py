@@ -132,11 +132,11 @@ def index_page():
 
     FIELDS = [
         ('Datetime:',        lambda: aqs.dt,                     None,                    '{}'),
-        ('Temperature: ',    lambda: format_value(ensure_units(aqs.temp, toggle_unit.value), 2), lambda: toggle_unit.value,          '{} {}'),
+        ('Temperature: ',    lambda: format_value(ensure_units(aqs.temp, toggle_unit.value), 2), lambda: toggle_unit.value,          '{} °{}'),
         ('Relative Humidity: ', lambda: aqs.rh,                     None,                    '{}%'),
-        ('Dew Point: ',      lambda: format_value(ensure_units(aqs.dp, toggle_unit.value), 2), lambda: toggle_unit.value,         '{} {}'),
-        ('Wet Bulb: ',       lambda: format_value(ensure_units(aqs.wetbulb, toggle_unit.value), 2), lambda: toggle_unit.value,    '{} {}'),
-        ('Heat Index: ',     lambda: format_value(ensure_units(aqs.heat_index, toggle_unit.value), 2), lambda: toggle_unit.value,  '{} {}'),
+        ('Dew Point: ',      lambda: format_value(ensure_units(aqs.dp, toggle_unit.value), 2), lambda: toggle_unit.value,         '{} °{}'),
+        ('Wet Bulb: ',       lambda: format_value(ensure_units(aqs.wetbulb, toggle_unit.value), 2), lambda: toggle_unit.value,    '{} °{}'),
+        ('Heat Index: ',     lambda: format_value(ensure_units(aqs.heat_index, toggle_unit.value), 2), lambda: toggle_unit.value,  '{} °{}'),
         ('CO2: ',            lambda: aqs.co2,    None,                    '{} ppm'),
         ('VOC Index: ',      lambda: aqs.voc_index,   None,                    '{} / 500'),
         ('NOx Index: ',      lambda: aqs.nox_index,   None,                    '{} / 500'),
