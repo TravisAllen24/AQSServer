@@ -6,7 +6,6 @@ from utils import get_y_label, aggregate_data_max, aggregate_data_avg, aggregate
 logger = get_logger("AQSWebServer", "webserver.log")
 
 def log_error(exception: Exception):
-    # exc_info=True prints the entire, multi-line stack trace to your terminal
     logger.error(f"Framework Exception Caught: {exception}", exc_info=True)
 
 app.on_exception(log_error)
@@ -17,6 +16,7 @@ aqs = AQSData()
 def plotter(timespan="Hour", data_type="T", is_dark=False):
     """Plot time series data based on the specified time duration and data type."""
 
+    
     paper_color = "#222222" if is_dark else None
     bg_color =  "#222222" if is_dark else "#FFFFFF"
     grid_color = "#303030" if is_dark else '#EEEEEE'
@@ -41,7 +41,6 @@ def plotter(timespan="Hour", data_type="T", is_dark=False):
         data = [
                 {
                         'type': 'scatter',
-                        'name': 'Trace 3',
                         'x': agg_t1,
                         'y': agg_y3,
                         "fill": "tozeroy",
@@ -51,7 +50,6 @@ def plotter(timespan="Hour", data_type="T", is_dark=False):
                     },
                     {
                         'type': 'scatter',
-                        'name': 'Trace 2',
                         'x': agg_t1,
                         'y': agg_y2,
                         "fill": "tozeroy",
@@ -61,7 +59,6 @@ def plotter(timespan="Hour", data_type="T", is_dark=False):
                     },
                     {
                         'type': 'scatter',
-                        'name': 'Trace 1',
                         'x': agg_t1,
                         'y': agg_y1,
                         "fill": "tozeroy",
@@ -130,84 +127,83 @@ def index_page():
     """Define the main page of the web application."""
     aqs.sync()
 
-    with ui.row().classes('w-full justify-center'):
-        ui.label('AQS Dashboard').style('font-size: 300%; font-weight: 400')
+    FIELDS = [
+        ('Datetime:',        lambda: aqs.dts[-1],          '{}'),
+        ('Temperature: ',    lambda: aqs.temps[-1],        '{} C'),
+        ('Relative Humidity: ', lambda: aqs.humiditys[-1], '{}%'),
+        ('Dew Point: ',      lambda: aqs.dew_points[-1],   '{} C'),
+        ('CO2: ',            lambda: aqs.co2s[-1],         '{} ppm'),
+        ('VOC Index: ',      lambda: aqs.voc_indexs[-1],   '{} / 500'),
+        ('NOx Index: ',      lambda: aqs.nox_indexs[-1],   '{} / 500'),
+        ('PM 10: ',          lambda: aqs.pm100s[-1],       '{} μg/m³'),
+        ('PM 2.5: ',         lambda: aqs.pm25s[-1],        '{} μg/m³'),
+        ('PM 1.0: ',         lambda: aqs.pm10s[-1],        '{} μg/m³'),
+    ]
 
-    with ui.row().classes('w-full justify-center'):
+    STYLE_SECTION_HEADER = 'font-size: 125%; font-weight: 500'
+    STYLE_VALUE = 'font-size: 125%'
+    STYLE_SUBHEADER = 'font-size: 100%; font-weight: 500'
+    STYLE_TITLE = 'font-size: 300%; font-weight: 400'
+    STYLE_MUTED = 'color: grey'
+    STYLE_FOOTER = 'background-color: transparent; border-top: none;'
+
+    CLASS_CENTERED_ROW = 'w-full justify-center'
+    CLASS_TREND_CARD = 'w-full md:w-[700px] mx-auto overflow-hidden p-2'
+    CLASS_REFRESH_BTN = 'absolute right-2 bottom-2'
+    CLASS_FOOTER = 'w-full justify-end items-end'
+
+    def refresh_plot():
+        plotter.refresh(timespan=toggle_1.value, 
+                        data_type=toggle_2.value, 
+                        is_dark=dark_mode_switch.value)
+
+    def update_labels():
+        aqs.sync()
+        if aqs.dts:
+            for lbl, (_, getter, fmt) in zip(value_labels, FIELDS):
+                lbl.set_text(fmt.format(getter()))
+
+    with ui.row().classes(CLASS_CENTERED_ROW):
+        ui.label('AQS Dashboard').style(STYLE_TITLE)
+
+    with ui.row().classes(CLASS_CENTERED_ROW):
         with ui.column():
-            with ui.row().classes('w-full justify-center'):
-                ui.label('Most Recent Data').style('font-size: 125%; font-weight: 500')
+            with ui.row().classes(CLASS_CENTERED_ROW):
+                ui.label('Most Recent Data').style(STYLE_SECTION_HEADER)
             with ui.card_actions():
                 with ui.card():
                     with ui.grid(columns=2):
-                        ui.label('Datetime:').style('font-size: 125%; font-weight: 500')
-                        time_label = ui.label('-').style('font-size: 125%')
-
-                        ui.label('Temperature: ').style('font-size: 125%; font-weight: 500')
-                        temp_label = ui.label('-').style('font-size: 125%')
-
-                        ui.label('Relative Humidity: ').style('font-size: 125%; font-weight: 500')
-                        rh_label = ui.label('-').style('font-size: 125%')
-
-                        ui.label('Dew Point: ').style('font-size: 125%; font-weight: 500')
-                        dp_label = ui.label('-').style('font-size: 125%')
-
-                        ui.label('CO2: ').style('font-size: 125%; font-weight: 500')
-                        co2_label = ui.label('-').style('font-size: 125%')
-
-                        ui.label('VOC Index: ').style('font-size: 125%; font-weight: 500')
-                        voc_index_label = ui.label('-').style('font-size: 125%')
-
-                        ui.label('NOx Index: ').style('font-size: 125%; font-weight: 500')
-                        nox_index_label = ui.label('-').style('font-size: 125%')
-
-                        ui.label('PM 10: ').style('font-size: 125%; font-weight: 500')
-                        pm100_label = ui.label('-').style('font-size: 125%')
-
-                        ui.label('PM 2.5: ').style('font-size: 125%; font-weight: 500')
-                        pm25_label = ui.label('-').style('font-size: 125%')
-
-                        ui.label('PM 1.0: ').style('font-size: 125%; font-weight: 500')
-                        pm10_label = ui.label('-').style('font-size: 125%')
-
-                    def update_labels():
-                        aqs.sync()
-                        if aqs.dts:
-                            time_label.set_text(aqs.dts[-1])
-                            temp_label.set_text(f'{aqs.temps[-1]} C')
-                            rh_label.set_text(f'{aqs.humiditys[-1]}%')
-                            dp_label.set_text(f'{aqs.dew_points[-1]} C')
-                            co2_label.set_text(f'{aqs.co2s[-1]} ppm')
-                            voc_index_label.set_text(f'{aqs.voc_indexs[-1]} / 500')
-                            nox_index_label.set_text(f'{aqs.nox_indexs[-1]} / 500')
-                            pm100_label.set_text(f'{aqs.pm100s[-1]} μg/m³')
-                            pm25_label.set_text(f'{aqs.pm25s[-1]} μg/m³')
-                            pm10_label.set_text(f'{aqs.pm10s[-1]} μg/m³')
+                        value_labels = []
+                        for name, _, _ in FIELDS:
+                            ui.label(name).style(STYLE_SECTION_HEADER)
+                            value_labels.append(ui.label('-').style(STYLE_VALUE))
 
                     ui.timer(30, update_labels)
 
-
         with ui.column():
-            with ui.row().classes('w-full justify-center'):
-                ui.label('Data Time Trend').style('font-size: 125%; font-weight: 500')
+            with ui.row().classes(CLASS_CENTERED_ROW):
+                ui.label('Data Time Trend').style(STYLE_SECTION_HEADER)
             with ui.card_actions():
-                with ui.card().classes('w-full md:w-[700px] mx-auto overflow-hidden p-2'):
+                with ui.card().classes(CLASS_TREND_CARD):
                     plotter()
-                    with ui.row().classes('w-full justify-center'):
+                    with ui.row().classes(CLASS_CENTERED_ROW):
                         with ui.column():
-                            with ui.row().classes('w-full justify-center'):
-                                ui.label('Time period').style('font-size: 100%; font-weight: 500')
+                            with ui.row().classes(CLASS_CENTERED_ROW):
+                                ui.label('Time period').style(STYLE_SUBHEADER)
                             toggle_1 = ui.toggle(['Hour', 'Day', "Week", "Month", "Max"],
-                                            value='Hour', on_change=lambda: plotter.refresh(timespan = toggle_1.value, data_type = toggle_2.value, is_dark = switch.value))
+                                            value='Hour', on_change=refresh_plot)
                         with ui.column():
-                            with ui.row().classes('w-full justify-center'):
-                                ui.label('Data type').style('font-size: 100%; font-weight: 500')
+                            with ui.row().classes(CLASS_CENTERED_ROW):
+                                ui.label('Data type').style(STYLE_SUBHEADER)
                             toggle_2 = ui.toggle(['T', 'RH', "DP", "CO2", "VOC", "NOX", "PM"],
-                                           value='T', on_change=lambda: plotter.refresh(timespan = toggle_1.value, data_type = toggle_2.value, is_dark = switch.value))
+                                           value='T', on_change=refresh_plot)
+                        with ui.column():
+                            ui.button(icon='refresh', on_click=refresh_plot
+                                      ).classes(CLASS_REFRESH_BTN).style(STYLE_MUTED).tooltip('Refresh Plot')
 
-    with ui.footer().classes('w-full justify-end items-end').style('background-color: transparent; border-top: none;'):
+    with ui.footer().classes(CLASS_FOOTER).style(STYLE_FOOTER):
             dark = ui.dark_mode()
-            switch = ui.switch('Dark mode', on_change=lambda: plotter.refresh(timespan = toggle_1.value, data_type = toggle_2.value, is_dark = switch.value)).bind_value(dark).style('color: grey')
+            dark_mode_switch = ui.switch('Dark mode', on_change=refresh_plot).bind_value(dark).style(STYLE_MUTED)
 
 
 def main():
