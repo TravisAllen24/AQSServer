@@ -70,13 +70,10 @@ def delta_time(time_duration):
 
 
 ###### Plotting helpers ######
-def get_y_label(data_type):
+def get_y_label(data_type, temp_unit="C"):
     """Return the appropriate y-axis label based on the data type."""
-    y_labels = {"T": 'Temperature (C)',
+    y_labels = {"T": f'Temperature ({temp_unit})',
                 "RH": "Relative Humidity (%)",
-                "DP": "Dew Point (C)",
-                "WB": "Wet Bulb (C)",
-                "HI": "Heat Index (C)",
                 "CO2": "CO2 (ppm)",
                 "VOC": "VOC Index",
                 "NOX": "NOX Index",
@@ -138,7 +135,7 @@ def log_data(data):
             writer.writerow(data)
 
 
-###### 
+###### Temperature and Humidity Calculations ######
 def calculate_heat_index(t, rh):
     """Calculate the heat index given temperature (T) in Fahrenheit 
     and relative humidity (RH) in percent."""
@@ -190,3 +187,18 @@ def calculate_wet_bulb(temp_c: float|None, rh: float|None) -> float|None:
             - math.atan(rh - 1.676331)
             + 0.00391838 * rh ** 1.5 * math.atan(0.023101 * rh)
             - 4.686035)
+
+def c_to_f(celsius: float|None) -> float|None:
+    """Convert Celsius to Fahrenheit."""
+    if celsius is None:
+        return None
+    return (celsius * 9/5) + 32
+
+
+def ensure_units(temp, unit):
+    """Ensure the temperature is in the specified unit ('C' or 'F')."""
+    if temp is None:
+        return None
+    if unit == 'F':
+        return c_to_f(temp)
+    return temp

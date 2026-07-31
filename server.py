@@ -1,7 +1,8 @@
 from nicegui import ui, app
 from event_logger import get_logger
 from aqs_data import AQSData
-from utils import get_y_label, aggregate_data_max, aggregate_data_avg, aggregate_time, get_relevant_data
+from utils import (c_to_f, get_y_label, aggregate_data_max, aggregate_data_avg, 
+                   aggregate_time, get_relevant_data, ensure_units, format_value)
 
 logger = get_logger("AQSWebServer", "webserver.log")
 
@@ -13,7 +14,7 @@ app.on_exception(log_error)
 aqs = AQSData()
 
 @ui.refreshable
-def plotter(timespan="Hour", data_type="T", is_dark=False):
+def plotter(timespan="Hour", data_type="T", temp_unit="C", is_dark=False):
     """Plot time series data based on the specified time duration and data type."""
 
     
@@ -81,6 +82,9 @@ def plotter(timespan="Hour", data_type="T", is_dark=False):
         agg_t = aggregate_time(t)
         agg_y = aggregate_data_avg(y)
 
+        if data_type == 'T' and temp_unit == 'F':
+            agg_y = [c_to_f(v) for v in agg_y]
+
 
         data = [
                     {
@@ -127,18 +131,18 @@ def index_page():
     aqs.sync()
 
     FIELDS = [
-        ('Datetime:',        lambda: aqs.dt,          '{}'),
-        ('Temperature: ',    lambda: aqs.temp,        '{} C'),
-        ('Relative Humidity: ', lambda: aqs.rh,       '{}%'),
-        ('Dew Point: ',      lambda: aqs.dp,          '{} C'),
-        ('Wet Bulb: ',       lambda: aqs.wetbulb,     '{} C'),
-        ('Heat Index: ',     lambda: aqs.heat_index,  '{} C'),
-        ('CO2: ',            lambda: aqs.co2,         '{} ppm'),
-        ('VOC Index: ',      lambda: aqs.voc_index,   '{} / 500'),
-        ('NOx Index: ',      lambda: aqs.nox_index,   '{} / 500'),
-        ('PM 10: ',          lambda: aqs.pm100,       '{} μg/m³'),
-        ('PM 2.5: ',         lambda: aqs.pm25,        '{} μg/m³'),
-        ('PM 1.0: ',         lambda: aqs.pm10,        '{} μg/m³'),
+        ('Datetime:',        lambda: aqs.dt,                     None,                    '{}'),
+        ('Temperature: ',    lambda: format_value(ensure_units(aqs.temp, toggle_unit.value), 2), lambda: toggle_unit.value,          '{} {}'),
+        ('Relative Humidity: ', lambda: aqs.rh,                     None,                    '{}%'),
+        ('Dew Point: ',      lambda: format_value(ensure_units(aqs.dp, toggle_unit.value), 2), lambda: toggle_unit.value,         '{} {}'),
+        ('Wet Bulb: ',       lambda: format_value(ensure_units(aqs.wetbulb, toggle_unit.value), 2), lambda: toggle_unit.value,    '{} {}'),
+        ('Heat Index: ',     lambda: format_value(ensure_units(aqs.heat_index, toggle_unit.value), 2), lambda: toggle_unit.value,  '{} {}'),
+        ('CO2: ',            lambda: aqs.co2,    None,                    '{} ppm'),
+        ('VOC Index: ',      lambda: aqs.voc_index,   None,                    '{} / 500'),
+        ('NOx Index: ',      lambda: aqs.nox_index,   None,                    '{} / 500'),
+        ('PM 10: ',          lambda: aqs.pm100,       None,                    '{} μg/m³'),
+        ('PM 2.5: ',         lambda: aqs.pm25,        None,                    '{} μg/m³'),
+        ('PM 1.0: ',         lambda: aqs.pm10,        None,                    '{} μg/m³'),
     ]
 
     STYLE_SECTION_HEADER = 'font-size: 125%; font-weight: 500'
@@ -154,15 +158,25 @@ def index_page():
     CLASS_FOOTER = 'w-full justify-end items-end'
 
     def refresh_plot():
-        plotter.refresh(timespan=toggle_1.value, 
-                        data_type=toggle_2.value, 
+        plotter.refresh(timespan=toggle_time.value, 
+                        data_type=toggle_data.value, 
+                        temp_unit=toggle_unit.value,
                         is_dark=dark_mode_switch.value)
 
     def update_labels():
         aqs.sync()
         if aqs.dts:
-            for lbl, (_, getter, fmt) in zip(value_labels, FIELDS):
-                lbl.set_text(fmt.format(getter()))
+            for lbl, (_, getter, unit_getter, fmt) in zip(value_labels, FIELDS):
+                value = getter()
+
+                if unit_getter:
+                    lbl.set_text(fmt.format(value, unit_getter()))
+                else:
+                    lbl.set_text(fmt.format(value))
+                    
+    def refresh():
+        refresh_plot()
+        update_labels()
 
     with ui.row().classes(CLASS_CENTERED_ROW):
         ui.label('AQS Dashboard').style(STYLE_TITLE)
@@ -175,7 +189,7 @@ def index_page():
                 with ui.card():
                     with ui.grid(columns=2):
                         value_labels = []
-                        for name, _, _ in FIELDS:
+                        for name, _, _, _ in FIELDS:
                             ui.label(name).style(STYLE_SECTION_HEADER)
                             value_labels.append(ui.label('-').style(STYLE_VALUE))
 
@@ -191,15 +205,21 @@ def index_page():
                         with ui.column():
                             with ui.row().classes(CLASS_CENTERED_ROW):
                                 ui.label('Time period').style(STYLE_SUBHEADER)
-                            toggle_1 = ui.toggle(['Hour', 'Day', "Week", "Month", "Max"],
-                                            value='Hour', on_change=refresh_plot)
+                            toggle_time = ui.toggle(['Hour', 'Day', "Week", "Month", "Max"],
+                                            value='Hour', on_change=refresh)
                         with ui.column():
                             with ui.row().classes(CLASS_CENTERED_ROW):
                                 ui.label('Data type').style(STYLE_SUBHEADER)
-                            toggle_2 = ui.toggle(['T', 'RH', "CO2", "VOC", "NOX", "PM"],
-                                           value='T', on_change=refresh_plot)
+                            toggle_data = ui.toggle(['T', 'RH', "CO2", "VOC", "NOX", "PM"],
+                                           value='T', on_change=refresh)
                         with ui.column():
-                            ui.button(icon='refresh', on_click=refresh_plot
+                            with ui.row().classes(CLASS_CENTERED_ROW):
+                                ui.label('Units').style(STYLE_SUBHEADER)
+                            toggle_unit = ui.toggle(['C', 'F'],
+                                            value='C', on_change=refresh)
+        
+                        with ui.column():
+                            ui.button(icon='refresh', on_click=refresh
                                       ).classes(CLASS_REFRESH_BTN).style(STYLE_MUTED).tooltip('Refresh Plot')
 
     with ui.footer().classes(CLASS_FOOTER).style(STYLE_FOOTER):
