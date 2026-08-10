@@ -11,7 +11,7 @@ from event_logger import get_logger
 class SerialCollector:
     """Reads lines from a local USB serial port."""
 
-    def __init__(self, com_port="/dev/aqs-sensor", baudrate=115200, timeout=60):
+    def __init__(self, com_port, baudrate, timeout):
         self.com_port = com_port
         self.baudrate = baudrate
         self.timeout = timeout
@@ -54,7 +54,7 @@ class TCPCollector:
     """Connects out to a TCP data source (e.g. an ESP32 acting as a server)
     as a client and reads lines."""
 
-    def __init__(self, host="192.168.1.194", port=65432, timeout=60):
+    def __init__(self, host, port, timeout):
         self.host = host
         self.port = port
         self.timeout = timeout
@@ -98,8 +98,8 @@ class TCPCollector:
 class DataCollector:
     """Collects data from either a local USB serial port or a TCP source."""
 
-    def __init__(self, com_port="/dev/aqs-sensor", baudrate=115200,
-                 tcp_host="127.0.0.1", tcp_port=5000, timeout=60):
+    def __init__(self, com_port, baudrate,
+                 tcp_host, tcp_port, timeout):
         self.logger = get_logger("DataCollector", "data_collector.log")
 
         self.tcp_host = tcp_host
@@ -177,7 +177,7 @@ if __name__ == "__main__":
     # USB serial mode:
     data_collector = DataCollector(
         com_port="/dev/aqs-sensor", baudrate=115200,
-        tcp_host="192.168.1.194", tcp_port=65432,
+        tcp_host="192.168.1.46", tcp_port=65432,
         timeout=60
     )
 
