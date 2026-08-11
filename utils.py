@@ -5,10 +5,12 @@ import threading
 from typing import Any
 from contextlib import suppress
 
+NONETYPES = [None, 'None', '', '-']
+
 ### Formatting helpers ###
 def format_value(value: Any, precision: int = 0) -> str | int | float:
     """Format the value or return '-' if None."""
-    if value is None:
+    if value in NONETYPES:
         return "-"
 
     if isinstance(value, str):
@@ -103,6 +105,10 @@ def aggregate_data_max(data_list, n=120) -> list[float|None]:
 
     for i in range(0, len(data_list), interval):
         chunk = data_list[i:i + interval]
+        for j in range(len(chunk)):
+            if chunk[j] in NONETYPES:
+                chunk[j] = float('-inf')  # Use negative infinity for invalid values
+
         max_data = max(v for v in chunk)
         aggregated_data.append(max_data)
 
@@ -137,7 +143,7 @@ def log_data(data):
 
 ###### Temperature and Humidity Calculations ######
 def calculate_heat_index(t, rh):
-    """Calculate the heat index given temperature (T) in Fahrenheit 
+    """Calculate the heat index given temperature (T) in Fahrenheit
     and relative humidity (RH) in percent."""
     if t is None or rh is None:
         return None
@@ -145,8 +151,8 @@ def calculate_heat_index(t, rh):
     hi = 0.5 * (t + 61.0 + ((t-68.0)*1.2) + (rh*0.094))
 
     if hi > 80:
-            hi = (-42.379 + 2.04901523*t + 10.14333127*rh - .22475541*t*rh 
-            - .00683783*t*t - .05481717*rh*rh + .00122874*t*t*rh 
+            hi = (-42.379 + 2.04901523*t + 10.14333127*rh - .22475541*t*rh
+            - .00683783*t*t - .05481717*rh*rh + .00122874*t*t*rh
             + .00085282*t*rh*rh - .00000199*t*t*rh*rh)
 
     if rh < 13 and 80 <= t <= 112:
